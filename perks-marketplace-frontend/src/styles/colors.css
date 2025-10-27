@@ -1,0 +1,16 @@
+:root {
+    --color-primary: #0070f3;
+    --color-secondary: #1db954;
+    --color-background: #f5f5f5;
+    --color-text: #222222;
+    --color-accent: #ff4081;
+}
+
+/* Dark theme example */
+[data-theme='dark'] {
+    --color-primary: #1e90ff;
+    --color-secondary: #22c55e;
+    --color-background: #121212;
+    --color-text: #f1f1f1;
+    --color-accent: #ff69b4;
+}
