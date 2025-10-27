@@ -1,8 +1,22 @@
+/* src/app/globals.css */
 @import "tailwindcss";
 
 :root {
+  /* Default values (light theme) - these will be overridden by JS */
   --background: #ffffff;
   --foreground: #171717;
+  --primary: #0070f3;
+  --secondary: #ff4081;
+}
+
+/* You can still keep the @media query as a fallback or for non-JS users */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+    --primary: #3b82f6;
+    --secondary: #ec4899;
+  }
 }
 
 @theme inline {
@@ -12,15 +26,19 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background: var(--background); /* Use the CSS variable */
+  color: var(--foreground);    /* Use the CSS variable */
+  font-family: Arial, Helvetica, sans-serif;
+  transition: background 0.3s ease, color 0.3s ease; /* Optional: Add smooth transition */
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Example of using other theme colors */
+.button-primary {
+  background-color: var(--primary);
+  color: var(--background); /* Or another appropriate contrast color */
+}
+
+.text-secondary {
+  color: var(--secondary);
 }
