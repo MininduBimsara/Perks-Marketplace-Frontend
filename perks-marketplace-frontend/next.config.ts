@@ -1,10 +1,8 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   images: {
-    domains: ["cdn.example.com", "res.cloudinary.com"], // Whitelist image domains
+    domains: ["cdn.example.com", "res.cloudinary.com", "example.com"], // Whitelist image domains
   },
   // Environment variables accessible in the browser
   env: {
