@@ -28,7 +28,12 @@ const lightTheme: Theme = {
     background: "#ffffff",
     foreground: "#171717",
     primary: "#0070f3",
-    secondary: "#ff4081",
+    secondary: "#1db954",
+    // additional aliases (not in Theme type) will be present at runtime
+    // @ts-ignore
+    accent: "#ff4081",
+    // @ts-ignore
+    card: "#ffffff",
   },
 };
 
@@ -36,8 +41,12 @@ const darkTheme: Theme = {
   colors: {
     background: "#0a0a0a",
     foreground: "#ededed",
-    primary: "#3b82f6", // Example blue for dark theme
-    secondary: "#ec4899", // Example pink for dark theme
+    primary: "#3b82f6",
+    secondary: "#22c55e",
+    // @ts-ignore
+    accent: "#ec4899",
+    // @ts-ignore
+    card: "#0f1724",
   },
 };
 
@@ -71,12 +80,19 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Apply theme variables to the root element (optional but useful)
   React.useEffect(() => {
     const root = document.documentElement;
-    root.style.setProperty("--background", theme.colors.background);
-    root.style.setProperty("--foreground", theme.colors.foreground);
-    root.style.setProperty("--primary", theme.colors.primary);
-    root.style.setProperty("--secondary", theme.colors.secondary);
-    // Set other CSS variables if needed
-  }, [theme]);
+    // set data-theme so existing CSS rules like [data-theme='dark'] apply
+    root.dataset.theme = themeName;
+
+    root.style.setProperty("--color-background", (theme as any).colors.background);
+    root.style.setProperty("--color-text", (theme as any).colors.foreground);
+    root.style.setProperty("--color-primary", (theme as any).colors.primary);
+    root.style.setProperty("--color-secondary", (theme as any).colors.secondary);
+    root.style.setProperty("--color-accent", (theme as any).colors.accent || "#ff4081");
+    root.style.setProperty("--color-card", (theme as any).colors.card || (theme as any).colors.background);
+    // keep legacy aliases
+    root.style.setProperty("--background", (theme as any).colors.background);
+    root.style.setProperty("--foreground", (theme as any).colors.foreground);
+  }, [theme, themeName]);
 
   const value = useMemo(
     () => ({ theme, themeName, toggleTheme }),

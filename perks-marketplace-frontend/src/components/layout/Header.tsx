@@ -3,12 +3,14 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X, Search, Tag, Sparkles, BookOpen } from 'lucide-react';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function PerksHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('');
   const pathname = usePathname();
+  const { themeName, toggleTheme } = useTheme();
 
   // Derive active tab from the current pathname so nav highlights correctly
   useEffect(() => {
@@ -72,7 +74,7 @@ export default function PerksHeader() {
         }
       `}</style>
 
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+  <header className="sticky top-0 z-50 border-b shadow-sm" style={{ backgroundColor: 'var(--color-background)', borderColor: 'var(--card-border)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
@@ -90,22 +92,43 @@ export default function PerksHeader() {
               {navItems.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <Link
-                    key={item.id}
-                    href={item.href}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`nav-item flex items-center space-x-1 font-medium transition-colors ${
-                      activeTab === item.id ? 'active' : ''
-                    }`}
-                    style={{
-                      color: activeTab === item.id ? 'var(--color-primary)' : 'var(--color-text)',
-                      opacity: activeTab === item.id ? 1 : 0.7,
-                    }}
-                    aria-current={activeTab === item.id ? 'page' : undefined}
-                  >
-                    {Icon && <Icon className="h-4 w-4" />}
-                    <span>{item.label}</span>
-                  </Link>
+                  <div key={item.id} className="flex items-center space-x-2">
+                    <Link
+                      href={item.href}
+                      onClick={() => setActiveTab(item.id)}
+                      className={`nav-item flex items-center space-x-1 font-medium transition-colors ${
+                        activeTab === item.id ? 'active' : ''
+                      }`}
+                      style={{
+                        color: activeTab === item.id ? 'var(--color-primary)' : 'var(--color-text)',
+                        opacity: activeTab === item.id ? 1 : 0.7,
+                      }}
+                      aria-current={activeTab === item.id ? 'page' : undefined}
+                    >
+                      {Icon && <Icon className="h-4 w-4" />}
+                      <span>{item.label}</span>
+                    </Link>
+                    {item.id === 'about' && (
+                      <label className="ml-2 flex items-center" aria-label="Toggle theme">
+                        <input
+                          type="checkbox"
+                          checked={themeName === 'dark'}
+                          onChange={toggleTheme}
+                          className="sr-only"
+                        />
+                        <span
+                          className="ml-20 w-10 h-6 bg-gray-300 rounded-full relative"
+                          style={{ backgroundColor: themeName === 'dark' ? 'var(--color-primary)' : '#cbd5e1' }}
+                        >
+                          <span
+                            className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${
+                              themeName === 'dark' ? 'translate-x-4' : 'translate-x-0'
+                            }`}
+                          />
+                        </span>
+                      </label>
+                    )}
+                  </div>
                 );
               })}
             </nav>
@@ -153,7 +176,7 @@ export default function PerksHeader() {
                   placeholder="Search perks, categories, or tags..."
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg outline-none"
                   style={{ 
-                    backgroundColor: 'white',
+                    backgroundColor: 'var(--color-background)',
                     color: 'var(--color-text)'
                   }}
                   autoFocus
