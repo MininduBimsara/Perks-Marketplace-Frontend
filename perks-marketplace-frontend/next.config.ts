@@ -1,5 +1,5 @@
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false,
   swcMinify: true,
   images: {
     domains: ["cdn.example.com", "res.cloudinary.com", "example.com"], // Whitelist image domains
