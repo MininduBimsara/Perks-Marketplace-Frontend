@@ -8,24 +8,23 @@ import React from "react";
 type NavItem = {
   href: string;
   label: string;
-  icon: "dashboard" | "users" | "category" | "leads" | "reports" | "settings";
+  icon: "perk" | "blog" | "category" | "settings";
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
-  { href: "/users", label: "Users", icon: "users" },
-  { href: "/leads", label: "Leads", icon: "leads" },
-  { href: "/categories", label: "Categories", icon: "category" },
-  { href: "/reports", label: "Reports", icon: "reports" },
-  { href: "/settings", label: "Settings", icon: "settings" },
+  { href: "/cms/perks", label: "Perks", icon: "perk" },
+  { href: "/cms/journal", label: "Journal", icon: "blog" },
+  { href: "/cms/pages", label: "Pages", icon: "settings" },
+  { href: "/cms/categories", label: "Categories", icon: "category" },
+  { href: "/cms/forms", label: "Forms", icon: "settings" },
+  { href: "/cms/display", label: "Display", icon: "settings" },
 ];
 
-function AdminSidebar() {
+export default function CmsSidebar() {
   const pathname = usePathname();
-
   return (
     <aside className="w-64 bg-white border-r border-gray-200 flex flex-col p-4 shrink-0">
-      <div className="text-2xl font-bold text-gray-900 mb-6 px-2">Admin</div>
+      <div className="text-2xl font-bold text-gray-900 mb-6 px-2">CMS</div>
       <nav className="flex-1 space-y-1">
         {NAV_ITEMS.map((item) => {
           const active = pathname === item.href;
@@ -48,5 +47,3 @@ function AdminSidebar() {
     </aside>
   );
 }
-
-export default AdminSidebar;

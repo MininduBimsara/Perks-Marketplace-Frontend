@@ -8,14 +8,14 @@ import { Icon } from "@/components/icons/Icon";
 export default function Page() {
   return (
     <Card>
-      <CardHeader title="Perks moved to CMS" />
+      <CardHeader title="Journal moved to CMS" />
       <CardContent className="space-y-4">
         <p className="text-gray-700">
-          Perks management now lives in the CMS section.
+          Blog/Journal management now lives in the CMS section.
         </p>
-        <Link href="/cms/perks">
+        <Link href="/cms/journal">
           <Button>
-            <Icon name="perk" className="w-4 h-4 mr-2" /> Go to CMS → Perks
+            <Icon name="blog" className="w-4 h-4 mr-2" /> Go to CMS → Journal
           </Button>
         </Link>
       </CardContent>

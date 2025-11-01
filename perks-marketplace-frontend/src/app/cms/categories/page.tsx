@@ -137,7 +137,7 @@ export default function Page() {
   return (
     <>
       <Card>
-        <CardHeader title="Categories & Subcategories">
+        <CardHeader title="Categories (CMS)">
           <div className="flex justify-end items-center mt-2">
             <Button onClick={() => handleOpenModal()}>
               <Icon name="plus" className="w-4 h-4 mr-2" />
