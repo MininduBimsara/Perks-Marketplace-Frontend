@@ -1,28 +1,14 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Menu, X, Search, Tag, Sparkles, BookOpen } from 'lucide-react';
+import { Menu, X, Search, Tag, Sparkles, BookOpen, Sun, Moon } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 
 export default function PerksHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('');
-  const pathname = usePathname();
+  const [activeTab, setActiveTab] = useState('home');
   const { themeName, toggleTheme } = useTheme();
-
-  // Derive active tab from the current pathname so nav highlights correctly
-  useEffect(() => {
-    if (!pathname) return;
-    const findMatch = navItems.find((it) => {
-      if (it.href === '/') return pathname === '/';
-      return pathname === it.href || pathname.startsWith(it.href + '/') || pathname.startsWith(it.href);
-    });
-    if (findMatch) setActiveTab(findMatch.id);
-    else if (pathname === '/') setActiveTab('home');
-    else setActiveTab('');
-  }, [pathname]);
 
   const navItems = [
     { id: 'home', label: 'Home', href: '/' },
@@ -30,7 +16,6 @@ export default function PerksHeader() {
     { id: 'categories', label: 'Categories', href: '/categories', icon: Tag },
     { id: 'blog', label: 'Blog', href: '/blog', icon: BookOpen },
     { id: 'about', label: 'About Us', href: '/about', icon: Sparkles },
-
   ];
 
   return (
@@ -39,17 +24,19 @@ export default function PerksHeader() {
         :root {
           --color-primary: #0070f3;
           --color-secondary: #1db954;
-          --color-background: #f5f5f5;
+          --color-background: #ffffff;
           --color-text: #222222;
           --color-accent: #ff4081;
+          --card-border: #e5e5e5;
         }
 
         [data-theme='dark'] {
-          --color-primary: #1e90ff;
+          --color-primary: #3b82f6;
           --color-secondary: #22c55e;
-          --color-background: #121212;
+          --color-background: #0a0a0a;
           --color-text: #f1f1f1;
-          --color-accent: #ff69b4;
+          --color-accent: #ec4899;
+          --card-border: #2a2a2a;
         }
 
         .nav-item {
@@ -72,9 +59,18 @@ export default function PerksHeader() {
         .nav-item.active::after {
           transform: scaleX(1);
         }
+
+        .theme-toggle {
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+          transform: scale(1.1);
+        }
       `}</style>
 
-  <header className="sticky top-0 z-50 border-b shadow-sm" style={{ backgroundColor: 'var(--color-background)', borderColor: 'var(--card-border)' }}>
+      <header className="sticky top-0 z-50 border-b shadow-sm" style={{ backgroundColor: 'var(--color-background)', borderColor: 'var(--card-border)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
@@ -92,73 +88,97 @@ export default function PerksHeader() {
               {navItems.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <div key={item.id} className="flex items-center space-x-2">
-                    <Link
-                      href={item.href}
-                      onClick={() => setActiveTab(item.id)}
-                      className={`nav-item flex items-center space-x-1 font-medium transition-colors ${
-                        activeTab === item.id ? 'active' : ''
-                      }`}
-                      style={{
-                        color: activeTab === item.id ? 'var(--color-primary)' : 'var(--color-text)',
-                        opacity: activeTab === item.id ? 1 : 0.7,
-                      }}
-                      aria-current={activeTab === item.id ? 'page' : undefined}
-                    >
-                      {Icon && <Icon className="h-4 w-4" />}
-                      <span>{item.label}</span>
-                    </Link>
-                    {item.id === 'about' && (
-                      <label className="ml-2 flex items-center" aria-label="Toggle theme">
-                        <input
-                          type="checkbox"
-                          checked={themeName === 'dark'}
-                          onChange={toggleTheme}
-                          className="sr-only"
-                        />
-                        <span
-                          className="ml-20 w-10 h-6 bg-gray-300 rounded-full relative"
-                          style={{ backgroundColor: themeName === 'dark' ? 'var(--color-primary)' : '#cbd5e1' }}
-                        >
-                          <span
-                            className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${
-                              themeName === 'dark' ? 'translate-x-4' : 'translate-x-0'
-                            }`}
-                          />
-                        </span>
-                      </label>
-                    )}
-                  </div>
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`nav-item flex items-center space-x-1 font-medium transition-colors ${
+                      activeTab === item.id ? 'active' : ''
+                    }`}
+                    style={{
+                      color: activeTab === item.id ? 'var(--color-primary)' : 'var(--color-text)',
+                      opacity: activeTab === item.id ? 1 : 0.7,
+                    }}
+                    aria-current={activeTab === item.id ? 'page' : undefined}
+                  >
+                    {Icon && <Icon className="h-4 w-4" />}
+                    <span>{item.label}</span>
+                  </Link>
                 );
               })}
             </nav>
 
             {/* Right Side Actions */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                className="theme-toggle p-2 rounded-lg transition-colors"
+                style={{ 
+                  backgroundColor: themeName === 'dark' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(0, 112, 243, 0.1)',
+                  color: 'var(--color-primary)' 
+                }}
+                aria-label="Toggle theme"
+              >
+                {themeName === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+              </button>
+
               {/* Search Button */}
               <button
                 onClick={() => setSearchOpen(!searchOpen)}
-                className="p-2 rounded-lg transition-colors hover:bg-gray-100"
-                style={{ color: 'var(--color-text)', opacity: 0.7 }}
+                className="p-2 rounded-lg transition-colors hover:bg-opacity-10"
+                style={{ 
+                  color: 'var(--color-text)', 
+                  opacity: 0.7,
+                  backgroundColor: searchOpen ? 'rgba(0, 112, 243, 0.1)' : 'transparent'
+                }}
                 aria-label="Search"
               >
                 <Search className="h-5 w-5" />
               </button>
 
-              {/* CTA Button - Desktop */}
-              <Link
-                href="/submit"
-                className="hidden md:inline-flex items-center px-4 py-2 text-white font-medium rounded-lg transition-colors shadow-sm"
-                style={{ backgroundColor: 'var(--color-primary)' }}
-              >
-                Submit Perk
-              </Link>
+              {/* Desktop Action Buttons */}
+              <div className="hidden md:flex items-center space-x-2">
+                <Link
+                  href="/submit"
+                  className="inline-flex items-center px-4 py-2 font-medium rounded-lg transition-all hover:opacity-90"
+                  style={{ 
+                    backgroundColor: 'transparent',
+                    color: 'var(--color-primary)',
+                    border: '2px solid var(--color-primary)'
+                  }}
+                >
+                  Submit Perk
+                </Link>
+                <Link
+                  href="/signup"
+                  className="inline-flex items-center px-4 py-2 font-medium rounded-lg transition-all hover:opacity-90"
+                  style={{ 
+                    backgroundColor: 'transparent',
+                    color: 'var(--color-primary)',
+                    border: '2px solid var(--color-primary)'
+                  }}
+                >
+                  Sign Up
+                </Link>
+                <Link
+                  href="/signin"
+                  className="inline-flex items-center px-4 py-2 text-white font-medium rounded-lg transition-all hover:opacity-90 shadow-sm"
+                  style={{ backgroundColor: 'var(--color-primary)' }}
+                >
+                  Sign In
+                </Link>
+              </div>
 
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 rounded-lg transition-colors hover:bg-gray-100"
-                style={{ color: 'var(--color-text)', opacity: 0.7 }}
+                className="md:hidden p-2 rounded-lg transition-colors"
+                style={{ 
+                  color: 'var(--color-text)', 
+                  opacity: 0.7,
+                  backgroundColor: mobileMenuOpen ? 'rgba(0, 112, 243, 0.1)' : 'transparent'
+                }}
                 aria-label="Toggle menu"
               >
                 {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -168,16 +188,20 @@ export default function PerksHeader() {
 
           {/* Search Bar Dropdown */}
           {searchOpen && (
-            <div className="py-4 border-t border-gray-200">
+            <div className="py-4 border-t" style={{ borderColor: 'var(--card-border)' }}>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Search 
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5" 
+                  style={{ color: 'var(--color-primary)', opacity: 0.5 }}
+                />
                 <input
                   type="text"
                   placeholder="Search perks, categories, or tags..."
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg outline-none"
+                  className="w-full pl-10 pr-4 py-3 rounded-lg outline-none transition-all"
                   style={{ 
-                    backgroundColor: 'var(--color-background)',
-                    color: 'var(--color-text)'
+                    backgroundColor: themeName === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+                    color: 'var(--color-text)',
+                    border: '1px solid var(--card-border)'
                   }}
                   autoFocus
                 />
@@ -187,7 +211,7 @@ export default function PerksHeader() {
 
           {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="md:hidden py-4 border-t border-gray-200">
+            <div className="md:hidden py-4 border-t" style={{ borderColor: 'var(--card-border)' }}>
               <nav className="flex flex-col space-y-4">
                 {navItems.map((item) => {
                   const Icon = item.icon;
@@ -195,11 +219,15 @@ export default function PerksHeader() {
                     <Link
                       key={item.id}
                       href={item.href}
-                      onClick={() => setActiveTab(item.id)}
-                      className="flex items-center space-x-2 font-medium transition-colors"
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setMobileMenuOpen(false);
+                      }}
+                      className="flex items-center space-x-2 font-medium transition-colors px-2 py-1 rounded-lg"
                       style={{
                         color: activeTab === item.id ? 'var(--color-primary)' : 'var(--color-text)',
                         opacity: activeTab === item.id ? 1 : 0.7,
+                        backgroundColor: activeTab === item.id ? 'rgba(0, 112, 243, 0.1)' : 'transparent'
                       }}
                       aria-current={activeTab === item.id ? 'page' : undefined}
                     >
@@ -208,13 +236,42 @@ export default function PerksHeader() {
                     </Link>
                   );
                 })}
-                <Link
-                  href="/submit"
-                  className="inline-flex items-center justify-center px-4 py-2 text-white font-medium rounded-lg transition-colors shadow-sm"
-                  style={{ backgroundColor: 'var(--color-primary)' }}
-                >
-                  Submit Perk
-                </Link>
+                
+                {/* Mobile Action Buttons */}
+                <div className="flex flex-col space-y-2 pt-2 border-t" style={{ borderColor: 'var(--card-border)' }}>
+                  <Link
+                    href="/submit"
+                    className="inline-flex items-center justify-center px-4 py-2 font-medium rounded-lg transition-colors"
+                    style={{ 
+                      backgroundColor: 'transparent',
+                      color: 'var(--color-primary)',
+                      border: '2px solid var(--color-primary)'
+                    }}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Submit Perk
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className="inline-flex items-center justify-center px-4 py-2 font-medium rounded-lg transition-colors"
+                    style={{ 
+                      backgroundColor: 'transparent',
+                      color: 'var(--color-primary)',
+                      border: '2px solid var(--color-primary)'
+                    }}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Sign Up
+                  </Link>
+                  <Link
+                    href="/signin"
+                    className="inline-flex items-center justify-center px-4 py-2 text-white font-medium rounded-lg transition-colors shadow-sm"
+                    style={{ backgroundColor: 'var(--color-primary)' }}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Sign In
+                  </Link>
+                </div>
               </nav>
             </div>
           )}

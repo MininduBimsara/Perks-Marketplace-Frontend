@@ -17,9 +17,9 @@ interface Theme {
     foreground: string;
     primary: string;
     secondary: string;
-    // Add other colors as needed
+    accent: string;
+    card: string;
   };
-  // Add other theme properties like fonts, spacing, etc.
 }
 
 // Define your themes
@@ -29,10 +29,7 @@ const lightTheme: Theme = {
     foreground: "#171717",
     primary: "#0070f3",
     secondary: "#1db954",
-    // additional aliases (not in Theme type) will be present at runtime
-    // @ts-ignore
     accent: "#ff4081",
-    // @ts-ignore
     card: "#ffffff",
   },
 };
@@ -43,9 +40,7 @@ const darkTheme: Theme = {
     foreground: "#ededed",
     primary: "#3b82f6",
     secondary: "#22c55e",
-    // @ts-ignore
     accent: "#ec4899",
-    // @ts-ignore
     card: "#0f1724",
   },
 };
@@ -77,21 +72,21 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     [themeName]
   );
 
-  // Apply theme variables to the root element (optional but useful)
+  // Apply theme variables to the root element
   React.useEffect(() => {
     const root = document.documentElement;
     // set data-theme so existing CSS rules like [data-theme='dark'] apply
     root.dataset.theme = themeName;
 
-    root.style.setProperty("--color-background", (theme as any).colors.background);
-    root.style.setProperty("--color-text", (theme as any).colors.foreground);
-    root.style.setProperty("--color-primary", (theme as any).colors.primary);
-    root.style.setProperty("--color-secondary", (theme as any).colors.secondary);
-    root.style.setProperty("--color-accent", (theme as any).colors.accent || "#ff4081");
-    root.style.setProperty("--color-card", (theme as any).colors.card || (theme as any).colors.background);
+    root.style.setProperty("--color-background", theme.colors.background);
+    root.style.setProperty("--color-text", theme.colors.foreground);
+    root.style.setProperty("--color-primary", theme.colors.primary);
+    root.style.setProperty("--color-secondary", theme.colors.secondary);
+    root.style.setProperty("--color-accent", theme.colors.accent);
+    root.style.setProperty("--color-card", theme.colors.card);
     // keep legacy aliases
-    root.style.setProperty("--background", (theme as any).colors.background);
-    root.style.setProperty("--foreground", (theme as any).colors.foreground);
+    root.style.setProperty("--background", theme.colors.background);
+    root.style.setProperty("--foreground", theme.colors.foreground);
   }, [theme, themeName]);
 
   const value = useMemo(
