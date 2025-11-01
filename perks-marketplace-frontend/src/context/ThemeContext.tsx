@@ -17,9 +17,9 @@ interface Theme {
     foreground: string;
     primary: string;
     secondary: string;
-    // Add other colors as needed
+    accent: string;
+    card: string;
   };
-  // Add other theme properties like fonts, spacing, etc.
 }
 
 // Define your themes
@@ -28,7 +28,9 @@ const lightTheme: Theme = {
     background: "#ffffff",
     foreground: "#171717",
     primary: "#0070f3",
-    secondary: "#ff4081",
+    secondary: "#1db954",
+    accent: "#ff4081",
+    card: "#ffffff",
   },
 };
 
@@ -36,8 +38,10 @@ const darkTheme: Theme = {
   colors: {
     background: "#0a0a0a",
     foreground: "#ededed",
-    primary: "#3b82f6", // Example blue for dark theme
-    secondary: "#ec4899", // Example pink for dark theme
+    primary: "#3b82f6",
+    secondary: "#22c55e",
+    accent: "#ec4899",
+    card: "#0f1724",
   },
 };
 
@@ -68,15 +72,22 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     [themeName]
   );
 
-  // Apply theme variables to the root element (optional but useful)
+  // Apply theme variables to the root element
   React.useEffect(() => {
     const root = document.documentElement;
+    // set data-theme so existing CSS rules like [data-theme='dark'] apply
+    root.dataset.theme = themeName;
+
+    root.style.setProperty("--color-background", theme.colors.background);
+    root.style.setProperty("--color-text", theme.colors.foreground);
+    root.style.setProperty("--color-primary", theme.colors.primary);
+    root.style.setProperty("--color-secondary", theme.colors.secondary);
+    root.style.setProperty("--color-accent", theme.colors.accent);
+    root.style.setProperty("--color-card", theme.colors.card);
+    // keep legacy aliases
     root.style.setProperty("--background", theme.colors.background);
     root.style.setProperty("--foreground", theme.colors.foreground);
-    root.style.setProperty("--primary", theme.colors.primary);
-    root.style.setProperty("--secondary", theme.colors.secondary);
-    // Set other CSS variables if needed
-  }, [theme]);
+  }, [theme, themeName]);
 
   const value = useMemo(
     () => ({ theme, themeName, toggleTheme }),
