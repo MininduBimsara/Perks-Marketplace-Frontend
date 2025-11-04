@@ -20,15 +20,18 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#perks" className="hover:text-yellow-400 transition">
+            <Link href="/" className="hover:text-yellow-400 transition">
+              Home
+            </Link>
+            <Link href="/perks" className="hover:text-yellow-400 transition">
               Perks
-            </a>
-            <a href="#how-it-works" className="hover:text-yellow-400 transition">
+            </Link>
+            <Link href="/how-it-works" className="hover:text-yellow-400 transition">
               How It Works
-            </a>
-            <a href="#journal" className="hover:text-yellow-400 transition">
+            </Link>
+            <Link href="/journal" className="hover:text-yellow-400 transition">
               Journal
-            </a>
+            </Link>
           </div>
 
           {/* CTA Button */}
