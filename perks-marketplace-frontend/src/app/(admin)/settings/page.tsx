@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Form";
 import { FormField } from "@/components/ui/Modal";
 import { SiteSettings } from "@/lib/types";
-import { settings as api } from "@/services/api";
+import { siteSettings as api } from "@/services/api";
 
 export default function Page() {
   const [settings, setSettings] = useState<SiteSettings | null>(null);

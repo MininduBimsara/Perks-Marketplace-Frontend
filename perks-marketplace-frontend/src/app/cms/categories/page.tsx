@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import {
   Table,
@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Form";
 import { Modal, FormField } from "@/components/ui/Modal";
 import { Icon } from "@/components/icons/Icon";
-import { categories as api } from "@/services/api";
+import { categoriesAdmin as api } from "@/services/api";
 import { Category, CategoryFormData } from "@/lib/types";
 
 function CategoryFormModal({
@@ -28,14 +28,18 @@ function CategoryFormModal({
   onSave: (data: CategoryFormData) => void;
   category: Category | null;
 }) {
-  const initial: CategoryFormData = category
-    ? {
-        name: category.name,
-        slug: category.slug,
-        description: category.description || "",
-        order: category.order,
-      }
-    : { name: "", slug: "", description: "", order: 0 };
+  const initial: CategoryFormData = useMemo(
+    () =>
+      category
+        ? {
+            name: category.name,
+            slug: category.slug,
+            description: category.description || "",
+            order: category.order,
+          }
+        : { name: "", slug: "", description: "", order: 0 },
+    [category]
+  );
   const [formData, setFormData] = useState<CategoryFormData>(() => initial);
 
   useEffect(() => {
@@ -109,10 +113,6 @@ export default function Page() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
   const fetchCategories = async () => {
     try {
       const res = await api.getAllCategories();
@@ -121,6 +121,14 @@ export default function Page() {
       console.error("Failed to fetch categories", error);
     }
   };
+
+  useEffect(() => {
+    // Defer to avoid synchronous setState warning in effect
+    const id = setTimeout(() => {
+      void fetchCategories();
+    }, 0);
+    return () => clearTimeout(id);
+  }, []);
 
   const handleOpenModal = (category: Category | null = null) => {
     setEditingCategory(category);
@@ -203,7 +211,8 @@ export default function Page() {
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))}</TableBody>
+              ))}
+            </TableBody>
           </Table>
         </CardContent>
       </Card>
