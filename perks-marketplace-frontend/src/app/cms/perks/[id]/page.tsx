@@ -9,6 +9,7 @@ interface Params {
 
 export default function Page({ params }: Params) {
   const router = useRouter();
-  const { id } = params;
-  return <PerkForm perkId={id} onSave={() => router.push("/perks")} />;
+  return (
+    <PerkForm perkId={params.id} onSave={() => router.push("/cms/perks")} />
+  );
 }

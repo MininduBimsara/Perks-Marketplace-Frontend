@@ -5,5 +5,5 @@ import { PerkForm } from "@/components/forms/PerkForm";
 
 export default function Page() {
   const router = useRouter();
-  return <PerkForm onSave={() => router.push("/perks")} />;
+  return <PerkForm onSave={() => router.push("/cms/perks")} />;
 }
