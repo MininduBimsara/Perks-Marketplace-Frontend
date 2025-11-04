@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import {
   Table,
@@ -14,8 +14,8 @@ import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Form";
 import { Modal, FormField } from "@/components/ui/Modal";
 import { Icon } from "@/components/icons/Icon";
+import { categories as api } from "@/services/api";
 import { Category, CategoryFormData } from "@/lib/types";
-import { MOCK_CATEGORIES } from "@/lib/mock-data";
 
 function CategoryFormModal({
   isOpen,
@@ -37,6 +37,10 @@ function CategoryFormModal({
       }
     : { name: "", slug: "", description: "", order: 0 };
   const [formData, setFormData] = useState<CategoryFormData>(() => initial);
+
+  useEffect(() => {
+    setFormData(initial);
+  }, [initial]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -101,11 +105,22 @@ function CategoryFormModal({
 }
 
 export default function Page() {
-  const [categories, setCategories] = useState<Category[]>(
-    () => MOCK_CATEGORIES
-  );
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const res = await api.getAllCategories();
+      setCategories(res.data);
+    } catch (error) {
+      console.error("Failed to fetch categories", error);
+    }
+  };
 
   const handleOpenModal = (category: Category | null = null) => {
     setEditingCategory(category);
@@ -117,21 +132,29 @@ export default function Page() {
     setEditingCategory(null);
   };
 
-  const handleSave = (formData: CategoryFormData) => {
-    if (editingCategory) {
-      setCategories(
-        categories.map((c) =>
-          c._id === editingCategory._id ? { ...c, ...formData } : c
-        )
-      );
-    } else {
-      const newCat: Category = {
-        ...(formData as CategoryFormData),
-        _id: `c${categories.length + 1}`,
-      } as Category;
-      setCategories([...categories, newCat]);
+  const handleSave = async (formData: CategoryFormData) => {
+    try {
+      if (editingCategory) {
+        await api.updateCategory(editingCategory._id, formData);
+      } else {
+        await api.createCategory(formData);
+      }
+      fetchCategories();
+      handleCloseModal();
+    } catch (error) {
+      console.error("Failed to save category", error);
     }
-    handleCloseModal();
+  };
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm("Are you sure you want to delete this category?")) {
+      try {
+        await api.deleteCategory(id);
+        fetchCategories();
+      } catch (error) {
+        console.error("Failed to delete category", error);
+      }
+    }
   };
 
   return (
@@ -171,10 +194,16 @@ export default function Page() {
                     >
                       <Icon name="edit" className="w-4 h-4" />
                     </Button>
+                    <Button
+                      variant="ghost"
+                      className="p-2"
+                      onClick={() => handleDelete(cat._id)}
+                    >
+                      <Icon name="trash" className="w-4 h-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
+              ))}</TableBody>
           </Table>
         </CardContent>
       </Card>

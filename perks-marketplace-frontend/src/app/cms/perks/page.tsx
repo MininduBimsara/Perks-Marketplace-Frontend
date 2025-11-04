@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import {
@@ -16,12 +16,25 @@ import { Input } from "@/components/ui/Form";
 import { StatusBadge } from "@/components/ui/Modal";
 import { Icon } from "@/components/icons/Icon";
 import { Perk } from "@/lib/types";
-import { MOCK_PERKS } from "@/lib/mock-data";
+import { perksAdmin as api } from "@/services/api";
 
 export default function Page() {
   const router = useRouter();
-  const [perks, setPerks] = useState<Perk[]>(() => MOCK_PERKS);
+  const [perks, setPerks] = useState<Perk[]>([]);
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    fetchPerks();
+  }, []);
+
+  const fetchPerks = async () => {
+    try {
+      const res = await api.getAllPerks();
+      setPerks(res.data);
+    } catch (error) {
+      console.error("Failed to fetch perks", error);
+    }
+  };
 
   const filteredPerks = useMemo(() => {
     return perks.filter((perk) =>
@@ -29,9 +42,15 @@ export default function Page() {
     );
   }, [perks, search]);
 
-  const handleDelete = (id: string) => {
-    console.log("Delete perk:", id);
-    setPerks(perks.filter((p) => p._id !== id));
+  const handleDelete = async (id: string) => {
+    if (window.confirm("Are you sure you want to delete this perk?")) {
+      try {
+        await api.deletePerk(id);
+        fetchPerks();
+      } catch (error) {
+        console.error("Failed to delete perk", error);
+      }
+    }
   };
 
   const handleCreateNew = () => router.push("/cms/perks/create");
