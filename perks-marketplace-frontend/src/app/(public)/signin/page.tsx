@@ -1,5 +1,7 @@
 'use client';
-
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks';
+import { loginUser } from '@/app/store/authSlice';
+import { useRouter } from 'next/navigation';
 // pages/signin.tsx
 import { useState } from 'react';
 import Link from 'next/link';
@@ -10,18 +12,23 @@ export default function SignIn() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+  const { loading, error, token } = useAppSelector((state) => state.auth);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Sign in:', { email, password, remember });
+    const result = await dispatch(loginUser({ email, password }));
+    if (loginUser.fulfilled.match(result)) {
+      router.push('/');
+    }
   };
+  
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Side - Sign In Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
         <div className="w-full max-w-md">
-          {/* Logo */}
           <Link href="/" className="flex items-center gap-2 mb-8">
             <div className="w-10 h-10 bg-yellow-400 rounded flex items-center justify-center">
               <span className="text-[#1a3d35] font-bold text-2xl">P</span>
