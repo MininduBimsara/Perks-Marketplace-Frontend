@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import {
   Table,
@@ -13,25 +13,26 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/icons/Icon";
 import { Lead } from "@/lib/types";
-import { MOCK_LEADS } from "@/lib/mock-data";
+import { leadManagement as api } from "@/services/api";
 
 export default function Page() {
-  const [leads] = useState<Lead[]>(() => MOCK_LEADS);
+  const [leads, setLeads] = useState<Lead[]>([]);
 
-  const handleExport = () => {
-    console.log("Exporting leads...");
-  };
+  useEffect(() => {
+    const fetchLeads = async () => {
+      try {
+        const res = await api.getAllLeads();
+        setLeads(res.data);
+      } catch (error) {
+        console.error("Failed to fetch leads", error);
+      }
+    };
+    fetchLeads();
+  }, []);
 
   return (
     <Card>
-      <CardHeader title="Captured Leads">
-        <div className="flex justify-end items-center mt-2">
-          <Button variant="secondary" onClick={handleExport}>
-            <Icon name="download" className="w-4 h-4 mr-2" />
-            Export CSV
-          </Button>
-        </div>
-      </CardHeader>
+      <CardHeader title="Captured Leads" />
       <CardContent className="p-0">
         <Table>
           <TableHeader>

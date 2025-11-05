@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardHeader,
@@ -11,8 +11,8 @@ import { Button } from "@/components/ui/Button";
 import { Input, Textarea, Select, Checkbox } from "@/components/ui/Form";
 import { FormField } from "@/components/ui/Modal";
 import { Icon } from "@/components/icons/Icon";
-import { PerkFormData } from "@/lib/types";
-import { MOCK_PERKS, MOCK_CATEGORIES } from "@/lib/mock-data";
+import { PerkFormData, Category } from "@/lib/types";
+import { perksAdmin, categoriesAdmin } from "@/services/api";
 
 interface PerkFormProps {
   perkId?: string;
@@ -22,64 +22,99 @@ interface PerkFormProps {
 interface FileUploadInputProps {
   label: string;
   name: string;
+  onUpload: (url: string) => void;
 }
 
-const FileUploadInput: React.FC<FileUploadInputProps> = ({ label, name }) => (
-  <FormField label={label}>
-    <div className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-500 relative">
-      <Icon name="upload" className="w-8 h-8" />
-      <span className="text-sm mt-2">Click or drag to upload</span>
-      <input
-        type="file"
-        name={name}
-        className="opacity-0 absolute inset-0 cursor-pointer"
-      />
-    </div>
-  </FormField>
-);
+const FileUploadInput: React.FC<FileUploadInputProps> = ({
+  label,
+  name,
+  onUpload,
+}) => {
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      // This is a placeholder for the actual upload API call
+      // You would replace this with your actual file upload logic
+      const res = await new Promise<{ url: string }>((resolve) =>
+        setTimeout(() => resolve({ url: URL.createObjectURL(file) }), 1000)
+      );
+      onUpload(res.url);
+    } catch (error) {
+      console.error("Upload failed", error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <FormField label={label}>
+      <div className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-500 relative">
+        {isUploading ? (
+          <p>Uploading...</p>
+        ) : (
+          <>
+            <Icon name="upload" className="w-8 h-8" />
+            <span className="text-sm mt-2">Click or drag to upload</span>
+          </>
+        )}
+        <input
+          type="file"
+          name={name}
+          className="opacity-0 absolute inset-0 cursor-pointer"
+          onChange={handleFileChange}
+        />
+      </div>
+    </FormField>
+  );
+};
 
 export const PerkForm: React.FC<PerkFormProps> = ({ perkId, onSave }) => {
   const isEditing = !!perkId;
-  const existing = isEditing
-    ? MOCK_PERKS.find((p) => p._id === perkId)
-    : undefined;
-  const [formData, setFormData] = useState<PerkFormData>(() =>
-    existing
-      ? {
-          title: existing.title,
-          shortDescription: existing.shortDescription || "",
-          longDescription: existing.longDescription || "",
-          location: existing.location,
-          redemptionMethod: existing.redemptionMethod,
-          affiliateUrl: existing.affiliateUrl || "",
-          couponCode: existing.couponCode || "",
-          validFrom: existing.validFrom || "",
-          validTo: existing.validTo || "",
-          tags: (existing.tags || []).join(", "),
-          categoryId: existing.categoryId || "",
-          status: existing.status,
-          featured: existing.featured,
-          slug: existing.slug,
-          seo: existing.seo,
+  const [formData, setFormData] = useState<PerkFormData>({
+    title: "",
+    shortDescription: "",
+    longDescription: "",
+    location: "Global",
+    redemptionMethod: "Affiliate",
+    affiliateUrl: "",
+    couponCode: "",
+    validFrom: "",
+    validTo: "",
+    tags: "",
+    categoryId: "",
+    status: "Draft",
+    featured: false,
+    slug: "",
+    seo: {
+      title: "",
+      metaDescription: "",
+    },
+  });
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const catRes = await categoriesAdmin.getAllCategories();
+        setCategories(catRes.data);
+
+        if (isEditing && perkId) {
+          const perkRes = await perksAdmin.getPerkById(perkId);
+          setFormData(perkRes.data);
         }
-      : {
-          title: "",
-          shortDescription: "",
-          longDescription: "",
-          location: "Global",
-          redemptionMethod: "Affiliate",
-          affiliateUrl: "",
-          couponCode: "",
-          validFrom: "",
-          validTo: "",
-          tags: "",
-          categoryId: "",
-          status: "Draft",
-          featured: false,
-          slug: "",
-          seo: { title: "", metaDescription: "" },
-        }
-  );
+      } catch (error) {
+        console.error("Failed to fetch data", error);
+      }
+    };
+    fetchData();
+  }, [isEditing, perkId]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -104,11 +139,22 @@ export const PerkForm: React.FC<PerkFormProps> = ({ perkId, onSave }) => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFileUpload = (name: string, url: string) => {
+    setFormData((prev) => ({ ...prev, [name]: url }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: POST or PUT to /api/admin/perks
-    console.log("Saving perk:", formData);
-    onSave();
+    try {
+      if (isEditing && perkId) {
+        await perksAdmin.updatePerk(perkId, formData);
+      } else {
+        await perksAdmin.createPerk(formData);
+      }
+      onSave();
+    } catch (error) {
+      console.error("Failed to save perk", error);
+    }
   };
 
   return (
@@ -196,8 +242,16 @@ export const PerkForm: React.FC<PerkFormProps> = ({ perkId, onSave }) => {
         <Card>
           <CardHeader title="Media" />
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FileUploadInput label="Logo (1:1)" name="logoUrl" />
-            <FileUploadInput label="Banner (16:9)" name="bannerUrl" />
+            <FileUploadInput
+              label="Logo (1:1)"
+              name="logoUrl"
+              onUpload={(url) => handleFileUpload("logoUrl", url)}
+            />
+            <FileUploadInput
+              label="Banner (16:9)"
+              name="bannerUrl"
+              onUpload={(url) => handleFileUpload("bannerUrl", url)}
+            />
           </CardContent>
         </Card>
 
@@ -284,7 +338,7 @@ export const PerkForm: React.FC<PerkFormProps> = ({ perkId, onSave }) => {
                 onChange={handleChange}
               >
                 <option value="">Select category</option>
-                {MOCK_CATEGORIES.map((c) => (
+                {categories.map((c) => (
                   <option key={c._id} value={c._id}>
                     {c.name}
                   </option>

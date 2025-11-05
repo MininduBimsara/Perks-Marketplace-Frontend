@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardHeader,
@@ -11,22 +11,48 @@ import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Form";
 import { FormField } from "@/components/ui/Modal";
 import { SiteSettings } from "@/lib/types";
-import { MOCK_SETTINGS } from "@/lib/mock-data";
+import { siteSettings as api } from "@/services/api";
 
 export default function Page() {
-  const [settings, setSettings] = useState<SiteSettings>(MOCK_SETTINGS);
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await api.getSiteSettings();
+        setSettings(res.data);
+      } catch (error) {
+        console.error("Failed to fetch settings", error);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setSettings((prev) => ({ ...prev, [name]: value }));
+    if (settings) {
+      setSettings((prev) => ({ ...prev!, [name]: value }));
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Saving settings:", settings);
+    if (settings) {
+      try {
+        await api.updateSiteSettings(settings);
+        alert("Settings saved successfully!");
+      } catch (error) {
+        console.error("Failed to save settings", error);
+        alert("Failed to save settings");
+      }
+    }
   };
+
+  if (!settings) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <form onSubmit={handleSubmit}>

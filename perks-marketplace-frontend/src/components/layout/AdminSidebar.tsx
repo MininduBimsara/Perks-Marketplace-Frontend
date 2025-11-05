@@ -11,6 +11,7 @@ type NavItem = {
   icon: "dashboard" | "users" | "category" | "leads" | "reports" | "settings";
 };
 
+// Admin routes are nested under /admin in the app router.
 const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
   { href: "/users", label: "Users", icon: "users" },
@@ -28,7 +29,9 @@ function AdminSidebar() {
       <div className="text-2xl font-bold text-gray-900 mb-6 px-2">Admin</div>
       <nav className="flex-1 space-y-1">
         {NAV_ITEMS.map((item) => {
-          const active = pathname === item.href;
+          // treat the item as active when the current pathname starts with the href
+          // this handles nested routes like /admin/dashboard/metrics
+          const active = pathname?.startsWith(item.href);
           return (
             <Link
               key={item.href}
