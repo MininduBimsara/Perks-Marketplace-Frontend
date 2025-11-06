@@ -55,7 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // write token to both keys to keep compatibility with existing services
           localStorage.setItem("auth_token", data.data.token);
           localStorage.setItem("token", data.data.token);
-          localStorage.setItem("auth_user", JSON.stringify(data.user || { email }));
+          localStorage.setItem("authentication_user", JSON.stringify(data.user || { email }));
           // also write a generic user key for other code that may read it
           localStorage.setItem("user", JSON.stringify(data.user || { email }));
           setUser(data.user || { email });
