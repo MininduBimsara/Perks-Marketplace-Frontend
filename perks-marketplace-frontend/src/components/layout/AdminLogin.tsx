@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -17,11 +17,12 @@ export default function AdminLogin() {
     e.preventDefault();
     const success = await login({ email, password });
     if (success) {
-      // navigate to reports page after successful login
-      router.push("/reports");
+      // Use Next.js router for navigation
+      router.push("/dashboard");
+      // Force refresh to ensure clean state
+      router.refresh();
     }
   };
-  
 
   return (
     <div className="min-h-screen flex">
@@ -44,8 +45,15 @@ export default function AdminLogin() {
             </p>
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
           {/* Form */}
-          <div className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email Input */}
             <div>
               <label className="block text-sm font-medium text-[#1a3d35] mb-2">
@@ -62,6 +70,8 @@ export default function AdminLogin() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@company.com"
                   className="w-full pl-12 pr-4 py-3 rounded-lg border-2 border-gray-200 focus:outline-none focus:border-yellow-400 transition"
+                  required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -82,11 +92,14 @@ export default function AdminLogin() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full pl-12 pr-12 py-3 rounded-lg border-2 border-gray-200 focus:outline-none focus:border-yellow-400 transition"
+                  required
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  disabled={isLoading}
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
@@ -101,6 +114,7 @@ export default function AdminLogin() {
                   checked={remember}
                   onChange={(e) => setRemember(e.target.checked)}
                   className="w-4 h-4 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400"
+                  disabled={isLoading}
                 />
                 <span className="ml-2 text-sm text-gray-600">Remember me</span>
               </label>
@@ -114,10 +128,11 @@ export default function AdminLogin() {
 
             {/* Submit Button */}
             <button
-              onClick={handleSubmit}
-              className="w-full bg-yellow-400 text-[#1a3d35] py-3 rounded-lg font-semibold hover:bg-yellow-500 transition text-lg"
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-yellow-400 text-[#1a3d35] py-3 rounded-lg font-semibold hover:bg-yellow-500 transition text-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign In
+              {isLoading ? "Signing In..." : "Sign In"}
             </button>
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -126,7 +141,7 @@ export default function AdminLogin() {
             </div>
             <div className="grid grid-cols-2 gap-4">
             </div>
-          </div>
+          </form>
         </div>
       </div>
       {/* Right Side - Visual Content */}
@@ -148,4 +163,3 @@ export default function AdminLogin() {
     </div>
   );
 }
-
