@@ -1,17 +1,23 @@
-// components/Header.tsx
-
-import Header from '@/components/layout/Header';
-// components/HomePage.tsx
+'use client';
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks';
 import { Search, Sparkles, Link as LinkIcon } from 'lucide-react';
 import Image from 'next/image';
+import { loginUser } from '@/app/store/authSlice';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function HomePage() {
+  const dispatch = useAppDispatch();
+  const auth = useAppSelector((state) => state.auth);
+  const router = useRouter();
   const partnerLogos = [
     { name: 'Zoom', position: 'top-12 left-8' },
     { name: 'Slack', position: 'top-8 right-12' },
     { name: 'Figma', position: 'bottom-24 left-12' },
   ];
-
+useEffect(() => {
+    if (!auth.token) router.push('/signin');
+  }, [auth.token]);
   const steps = [
     {
       number: '1',
