@@ -43,30 +43,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     setError(null);
     try {
-      // Attempt real API if env provided
-      const base = process.env.NEXT_PUBLIC_API_URL || "";
-      if (base) {
-        const res = await fetch(`https://perks-marketplace-backend.vercel.app/api/v1/auth/login`, {
+      // Attempt real API via Next rewrite (/api -> backend). This keeps auth and data calls on the same origin/backend.
+      // Configure next.config.mjs NEXT_PUBLIC_API_BASE_URL to your backend origin.
+      const res = await fetch(`https://perks-marketplace-backend.vercel.app/api/v1/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
         });
         const data = await res.json();
-        if (res.ok && data.token) {
+        if (res.ok && data.data.token) {
           // write token to both keys to keep compatibility with existing services
-          localStorage.setItem("auth_token", data.token);
-          localStorage.setItem("token", data.token);
-          localStorage.setItem("auth_user", JSON.stringify(data.user || { email }));
+          localStorage.setItem("auth_token", data.data.token);
+          localStorage.setItem("token", data.data.token);
+          localStorage.setItem("authentication_user", JSON.stringify(data.user || { email }));
           // also write a generic user key for other code that may read it
           localStorage.setItem("user", JSON.stringify(data.user || { email }));
           setUser(data.user || { email });
           setIsAuthenticated(true);
+          setIsLoading(false);
           return true;
         }
         throw new Error(data?.message || "Login failed");
-      }
-
-      // Fallback mock: accept admin@example.com / password
+      
+      // Fallback mock: accept admin@example.com / password when API is unavailable
       if (email === "admin@example.com" && password === "password") {
         const mockToken = "mock-token";
         localStorage.setItem("auth_token", mockToken);
@@ -75,6 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem("user", JSON.stringify({ email }));
         setUser({ email });
         setIsAuthenticated(true);
+        setIsLoading(false);
         return true;
       } else {
         throw new Error("Invalid credentials");
@@ -83,9 +83,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setError(err?.message || "Login error");
       setIsAuthenticated(false);
       setUser(null);
-      return false;
-    } finally {
       setIsLoading(false);
+      return false;
     }
   };
 
