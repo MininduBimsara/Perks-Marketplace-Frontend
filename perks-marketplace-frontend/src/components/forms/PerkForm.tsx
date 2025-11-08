@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardHeader,
@@ -25,7 +25,11 @@ interface FileUploadInputProps {
   onUpload: (url: string) => void;
 }
 
-const FileUploadInput: React.FC<FileUploadInputProps> = ({ label, name, onUpload }) => {
+const FileUploadInput: React.FC<FileUploadInputProps> = ({
+  label,
+  name,
+  onUpload,
+}) => {
   const [isUploading, setIsUploading] = useState(false);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,7 +77,26 @@ const FileUploadInput: React.FC<FileUploadInputProps> = ({ label, name, onUpload
 
 export const PerkForm: React.FC<PerkFormProps> = ({ perkId, onSave }) => {
   const isEditing = !!perkId;
-  const [formData, setFormData] = useState<PerkFormData>({ ... }); // Keep initial state
+  const [formData, setFormData] = useState<PerkFormData>({
+    title: "",
+    shortDescription: "",
+    longDescription: "",
+    location: "Global",
+    redemptionMethod: "Affiliate",
+    affiliateUrl: "",
+    couponCode: "",
+    validFrom: "",
+    validTo: "",
+    tags: "",
+    categoryId: "",
+    status: "Draft",
+    featured: false,
+    slug: "",
+    seo: {
+      title: "",
+      metaDescription: "",
+    },
+  });
   const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
@@ -219,8 +242,16 @@ export const PerkForm: React.FC<PerkFormProps> = ({ perkId, onSave }) => {
         <Card>
           <CardHeader title="Media" />
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FileUploadInput label="Logo (1:1)" name="logoUrl" onUpload={(url) => handleFileUpload("logoUrl", url)} />
-            <FileUploadInput label="Banner (16:9)" name="bannerUrl" onUpload={(url) => handleFileUpload("bannerUrl", url)} />
+            <FileUploadInput
+              label="Logo (1:1)"
+              name="logoUrl"
+              onUpload={(url) => handleFileUpload("logoUrl", url)}
+            />
+            <FileUploadInput
+              label="Banner (16:9)"
+              name="bannerUrl"
+              onUpload={(url) => handleFileUpload("bannerUrl", url)}
+            />
           </CardContent>
         </Card>
 
