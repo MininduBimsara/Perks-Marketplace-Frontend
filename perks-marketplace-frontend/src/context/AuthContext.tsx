@@ -70,20 +70,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       );
       const data = await res.json();
       console.log("[AuthContext] Login response:", data); // Debug
-      if (res.ok && data.data.token) {
+
+      // Extract token and user from response (handle both data.data and data.token formats)
+      const token = data?.data?.token || data?.token;
+      const user = data?.data?.user || data?.user;
+
+      if (res.ok && token && user) {
         // write token to both keys to keep compatibility with existing services
-        localStorage.setItem("auth_token", data.data.token);
-        localStorage.setItem("token", data.data.token);
-        localStorage.setItem(
-          "authentication_user",
-          JSON.stringify(data.user || { email })
-        );
+        localStorage.setItem("auth_token", token);
+        localStorage.setItem("token", token);
+        localStorage.setItem("authentication_user", JSON.stringify(user));
         // also write a generic user key for other code that may read it
-        localStorage.setItem("user", JSON.stringify(data.user || { email }));
-        setUser(data.user || { email });
+        localStorage.setItem("user", JSON.stringify(user));
+        setUser(user);
         setIsAuthenticated(true);
         setIsLoading(false);
-        console.log("[AuthContext] Login successful"); // Debug
+        console.log("[AuthContext] Login successful, user role:", user.role); // Debug
         return true;
       }
       console.warn("[AuthContext] Login failed, response:", data); // Debug

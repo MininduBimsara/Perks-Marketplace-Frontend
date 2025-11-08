@@ -15,15 +15,30 @@ export default function AdminLogin() {
   const pathname = usePathname();
   const { login, isLoading, error, user } = useAuth();
 
-  // Redirect content_editor to /cms/perks after login
+  // Redirect based on user role after login
   useEffect(() => {
     if (user) {
+      console.log(
+        "[AdminLogin] User detected, role:",
+        user.role,
+        "pathname:",
+        pathname
+      ); // Debug
       if (user.role === "content_editor") {
         if (!pathname.startsWith("/cms")) {
+          console.log("[AdminLogin] Redirecting content_editor to /cms/perks"); // Debug
           router.push("/cms/perks");
         }
       } else {
+        // Admin or other roles
         if (pathname.startsWith("/cms")) {
+          console.log(
+            "[AdminLogin] Redirecting non-content_editor to /dashboard"
+          ); // Debug
+          router.push("/dashboard");
+        } else if (pathname === "/login") {
+          // Redirect from login page to dashboard after successful login
+          console.log("[AdminLogin] Redirecting from login to /dashboard"); // Debug
           router.push("/dashboard");
         }
       }
