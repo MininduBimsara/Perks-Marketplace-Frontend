@@ -1,4 +1,5 @@
 "use client";
+import PerksCardSystem from "@/components/perks/PerkCard";
 import { Search, Sparkles, Link as LinkIcon } from "lucide-react";
 
 export default function HomePage() {
@@ -128,6 +129,7 @@ export default function HomePage() {
         <section className="py-20 bg-[#f5f1e3]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
+              <PerksCardSystem />
               <h2 className="text-4xl font-bold text-[#1a3d35] mb-4">
                 Trusted by Leading Brands
               </h2>
