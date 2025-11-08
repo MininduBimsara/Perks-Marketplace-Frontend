@@ -14,61 +14,24 @@ import { Icon } from "@/components/icons/Icon";
 import { PerkFormData, Category } from "@/lib/types";
 import { perksAdmin, categoriesAdmin } from "@/services/api";
 
-interface PerkFormProps {
-  perkId?: string;
-  onSave: () => void;
-}
-
-interface FileUploadInputProps {
-  label: string;
-  name: string;
-  onUpload: (url: string) => void;
-}
-
 const FileUploadInput: React.FC<FileUploadInputProps> = ({
   label,
   name,
   onUpload,
 }) => {
-  const [isUploading, setIsUploading] = useState(false);
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      // This is a placeholder for the actual upload API call
-      // You would replace this with your actual file upload logic
-      const res = await new Promise<{ url: string }>((resolve) =>
-        setTimeout(() => resolve({ url: URL.createObjectURL(file) }), 1000)
-      );
-      onUpload(res.url);
-    } catch (error) {
-      console.error("Upload failed", error);
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   return (
     <FormField label={label}>
       <div className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-500 relative">
-        {isUploading ? (
-          <p>Uploading...</p>
-        ) : (
-          <>
-            <Icon name="upload" className="w-8 h-8" />
-            <span className="text-sm mt-2">Click or drag to upload</span>
-          </>
-        )}
+        <Icon name="upload" className="w-8 h-8" />
+        <span className="text-sm mt-2">Click or drag to upload</span>
         <input
           type="file"
           name={name}
           className="opacity-0 absolute inset-0 cursor-pointer"
-          onChange={handleFileChange}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) onUpload(file);
+          }}
         />
       </div>
     </FormField>
@@ -77,24 +40,51 @@ const FileUploadInput: React.FC<FileUploadInputProps> = ({
 
 export const PerkForm: React.FC<PerkFormProps> = ({ perkId, onSave }) => {
   const isEditing = !!perkId;
-  const [formData, setFormData] = useState<PerkFormData>({
+  const [formData, setFormData] = useState<any>({
     title: "",
+    description: "",
     shortDescription: "",
     longDescription: "",
     location: "Global",
-    redemptionMethod: "Affiliate",
-    affiliateUrl: "",
-    couponCode: "",
-    validFrom: "",
-    validTo: "",
-    tags: "",
     categoryId: "",
+    vendor: { name: "", email: "", website: "", description: "" },
+    value: "",
+    originalPrice: { amount: 0, currency: "USD" },
+    discountedPrice: { amount: 0, currency: "USD" },
+    redemption: {
+      type: "",
+      instructions: "",
+      code: "",
+      expiryDate: "",
+      limitations: "",
+    },
+    availability: {
+      isLimited: false,
+      totalQuantity: 0,
+      startDate: "",
+      endDate: "",
+    },
+    tags: [],
+    features: [],
     status: "Draft",
-    featured: false,
+    isVisible: true,
+    isFeatured: false,
+    isExclusive: false,
+    priority: 0,
+    clientId: "",
+    mainImage: null,
+    vendorLogo: null,
+    gallery: [],
     slug: "",
     seo: {
       title: "",
       metaDescription: "",
+      description: "",
+      keywords: [],
+      ogTitle: "",
+      ogDescription: "",
+      canonicalUrl: "",
+      customMetaTags: [],
     },
   });
   const [categories, setCategories] = useState<Category[]>([]);
@@ -127,29 +117,137 @@ export const PerkForm: React.FC<PerkFormProps> = ({ perkId, onSave }) => {
 
     if (name.startsWith("seo.")) {
       const seoField = name.split(".")[1];
-      setFormData((prev) => ({
+      setFormData((prev: any) => ({
         ...prev,
         seo: { ...prev.seo, [seoField]: value },
       }));
-    } else {
-      setFormData((prev) => ({
+    } else if (name === "tags") {
+      setFormData((prev: any) => ({
         ...prev,
-        [name]: type === "checkbox" ? checked : value,
+        tags: value
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
+      }));
+    } else if (name === "features") {
+      setFormData((prev: any) => ({
+        ...prev,
+        features: value
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
+      }));
+    } else if (
+      ["isVisible", "isFeatured", "isExclusive", "featured"].includes(name)
+    ) {
+      setFormData((prev: any) => ({
+        ...prev,
+        [name]: checked,
+      }));
+    } else {
+      setFormData((prev: any) => ({
+        ...prev,
+        [name]: value,
       }));
     }
   };
 
-  const handleFileUpload = (name: string, url: string) => {
-    setFormData((prev) => ({ ...prev, [name]: url }));
+  const handleFileUpload = (name: string, file: File) => {
+    setFormData((prev: any) => ({ ...prev, [name]: file }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const data = new FormData();
+    // Basic fields
+    data.append("title", formData.title);
+    if (formData.description) data.append("description", formData.description);
+    if (formData.shortDescription)
+      data.append("shortDescription", formData.shortDescription);
+    if (formData.longDescription)
+      data.append("longDescription", formData.longDescription);
+    data.append("location", formData.location);
+    if (formData.categoryId) data.append("categoryId", formData.categoryId);
+    // Vendor
+    if (formData.vendor) {
+      Object.entries(formData.vendor).forEach(([k, v]) => {
+        if (typeof v === "string" && v) data.append(`vendor.${k}`, v);
+      });
+    }
+    // Value & Prices
+    if (formData.value) data.append("value", formData.value);
+    if (formData.originalPrice) {
+      if (formData.originalPrice.amount)
+        data.append(
+          "originalPrice.amount",
+          String(formData.originalPrice.amount)
+        );
+      if (formData.originalPrice.currency)
+        data.append(
+          "originalPrice.currency",
+          String(formData.originalPrice.currency)
+        );
+    }
+    if (formData.discountedPrice) {
+      if (formData.discountedPrice.amount)
+        data.append(
+          "discountedPrice.amount",
+          String(formData.discountedPrice.amount)
+        );
+      if (formData.discountedPrice.currency)
+        data.append(
+          "discountedPrice.currency",
+          String(formData.discountedPrice.currency)
+        );
+    }
+    // Redemption
+    if (formData.redemption) {
+      Object.entries(formData.redemption).forEach(([k, v]) => {
+        if (typeof v === "string" && v) data.append(`redemption.${k}`, v);
+      });
+    }
+    // Availability
+    if (formData.availability) {
+      Object.entries(formData.availability).forEach(([k, v]) => {
+        if ((typeof v === "string" || typeof v === "number") && v !== "")
+          data.append(`availability.${k}`, String(v));
+        if (typeof v === "boolean") data.append(`availability.${k}`, String(v));
+      });
+    }
+    // Arrays
+    if (formData.tags && Array.isArray(formData.tags))
+      formData.tags.forEach((t: string) => data.append("tags[]", t));
+    if (formData.features && Array.isArray(formData.features))
+      formData.features.forEach((f: string) => data.append("features[]", f));
+    // Booleans & misc
+    data.append("status", formData.status);
+    data.append("isVisible", String(formData.isVisible));
+    data.append("isFeatured", String(formData.isFeatured));
+    data.append("isExclusive", String(formData.isExclusive));
+    if (formData.priority) data.append("priority", String(formData.priority));
+    if (formData.clientId) data.append("clientId", formData.clientId);
+    // Files
+    if (formData.mainImage) data.append("mainImage", formData.mainImage);
+    if (formData.vendorLogo) data.append("vendorLogo", formData.vendorLogo);
+    if (formData.gallery && Array.isArray(formData.gallery))
+      formData.gallery.forEach((file: File) => data.append("gallery[]", file));
+    // Slug
+    if (formData.slug) data.append("slug", formData.slug);
+    // SEO
+    if (formData.seo) {
+      Object.entries(formData.seo).forEach(([k, v]) => {
+        if (Array.isArray(v))
+          v.forEach((item) => data.append(`seo.${k}[]`, String(item)));
+        else if (typeof v === "string" && v) data.append(`seo.${k}`, v);
+      });
+    }
     try {
       if (isEditing && perkId) {
-        await perksAdmin.updatePerk(perkId, formData);
+        // @ts-expect-error Accept FormData for multipart
+        await perksAdmin.updatePerk(perkId, data);
       } else {
-        await perksAdmin.createPerk(formData);
+        // @ts-expect-error Accept FormData for multipart
+        await perksAdmin.createPerk(data);
       }
       onSave();
     } catch (error) {
@@ -243,14 +341,14 @@ export const PerkForm: React.FC<PerkFormProps> = ({ perkId, onSave }) => {
           <CardHeader title="Media" />
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FileUploadInput
-              label="Logo (1:1)"
-              name="logoUrl"
-              onUpload={(url) => handleFileUpload("logoUrl", url)}
+              label="Main Image (1:1)"
+              name="mainImage"
+              onUpload={(file) => handleFileUpload("mainImage", file)}
             />
             <FileUploadInput
-              label="Banner (16:9)"
-              name="bannerUrl"
-              onUpload={(url) => handleFileUpload("bannerUrl", url)}
+              label="Vendor Logo"
+              name="vendorLogo"
+              onUpload={(file) => handleFileUpload("vendorLogo", file)}
             />
           </CardContent>
         </Card>
@@ -301,9 +399,9 @@ export const PerkForm: React.FC<PerkFormProps> = ({ perkId, onSave }) => {
               />
             </FormField>
             <Checkbox
-              name="featured"
+              name="isFeatured"
               label="Featured Perk"
-              checked={formData.featured}
+              checked={!!formData.isFeatured}
               onChange={handleChange}
             />
           </CardContent>
@@ -353,9 +451,19 @@ export const PerkForm: React.FC<PerkFormProps> = ({ perkId, onSave }) => {
             <FormField label="Tags">
               <Input
                 name="tags"
-                value={formData.tags}
+                value={formData.tags.join ? formData.tags.join(", ") : ""}
                 onChange={handleChange}
                 placeholder="Comma, separated, tags"
+              />
+            </FormField>
+            <FormField label="Features">
+              <Input
+                name="features"
+                value={
+                  formData.features.join ? formData.features.join(", ") : ""
+                }
+                onChange={handleChange}
+                placeholder="Comma, separated, features"
               />
             </FormField>
           </CardContent>
