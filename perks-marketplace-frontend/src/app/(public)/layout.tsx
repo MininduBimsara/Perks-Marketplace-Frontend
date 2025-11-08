@@ -1,21 +1,16 @@
-'use client';
+"use client";
 import PerksHeader from "@/components/layout/Header";
 import React from "react";
-import ReduxProvider from '../store/ReduxProvider';
 
 export default function PublicLayout({
-  children,...rest
+  children,
 }: {
   children: React.ReactNode;
-  }) {
+}) {
   return (
     <>
-     <PerksHeader />
-      <main>
-        <ReduxProvider>
-          {children}
-        </ReduxProvider>
-      </main>
+      <PerksHeader />
+      <main>{children}</main>
       <footer>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-4 border-t border-gray-200">
