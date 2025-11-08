@@ -100,7 +100,7 @@ function CategoryFormModal({
 
   // Handle text/select input changes
   const handleTextChange = (
-    e: React.ChangeEvent
+    e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => {
@@ -123,7 +123,7 @@ function CategoryFormModal({
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Parse keywords from comma-separated string
     const finalData: CategoryFormInput = {
       ...formData,
@@ -132,7 +132,7 @@ function CategoryFormModal({
         .map((k) => k.trim())
         .filter(Boolean),
     };
-    
+
     onSave(finalData);
   };
 
@@ -277,11 +277,20 @@ function CategoryFormModal({
 
         {/* Action Buttons */}
         <div className="flex justify-end space-x-2 pt-4 border-t">
-          <Button variant="secondary" type="button" onClick={onClose} disabled={isSubmitting}>
+          <Button
+            variant="secondary"
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+          >
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : category ? "Update Category" : "Create Category"}
+            {isSubmitting
+              ? "Saving..."
+              : category
+              ? "Update Category"
+              : "Create Category"}
           </Button>
         </div>
       </form>
@@ -305,11 +314,11 @@ export default function Page() {
       setLoading(true);
       setError("");
       const res = await categoriesAdmin.getAllCategories();
-      
+
       // Handle different response structures
       const list: Category[] = res.data?.data || res.data || [];
       console.log("Fetched categories:", list); // Debug log
-      
+
       setCategories(list);
     } catch (e) {
       const errorMsg = getErrorMessage(e, "Failed to load categories");
@@ -354,34 +363,34 @@ export default function Page() {
   // Build FormData from form input
   const buildFormData = (data: CategoryFormInput) => {
     const fd = new FormData();
-    
+
     // Required fields
     fd.append("name", data.name);
-    
+
     // Optional text fields
     if (data.description) fd.append("description", data.description);
     if (data.parentId) fd.append("parentId", data.parentId);
     if (data.color) fd.append("color", data.color);
     if (data.status) fd.append("status", data.status);
-    
+
     // Boolean fields - always append as string
     fd.append("isVisible", String(data.isVisible ?? true));
     fd.append("isFeatured", String(data.isFeatured ?? false));
-    
+
     // File upload
     if (data.image) {
       fd.append("image", data.image);
     }
-    
+
     // SEO fields
     if (data.seoTitle) fd.append("seoTitle", data.seoTitle);
     if (data.seoDescription) fd.append("seoDescription", data.seoDescription);
-    
+
     // SEO Keywords array
     if (data.seoKeywords && data.seoKeywords.length > 0) {
       data.seoKeywords.forEach((kw) => fd.append("seoKeywords[]", kw));
     }
-    
+
     return fd;
   };
 
@@ -389,16 +398,16 @@ export default function Page() {
   const handleSave = async (data: CategoryFormInput) => {
     setIsSubmitting(true);
     setError("");
-    
+
     try {
       const formData = buildFormData(data);
-      
+
       // Log FormData contents for debugging
       console.log("Submitting category data:");
       for (let pair of formData.entries()) {
-        console.log(pair[0] + ': ' + pair[1]);
+        console.log(pair[0] + ": " + pair[1]);
       }
-      
+
       if (editingCategory) {
         // Update existing category
         await categoriesAdmin.updateCategory(editingCategory._id, formData);
@@ -408,11 +417,10 @@ export default function Page() {
         await categoriesAdmin.createCategory(formData);
         console.log("Category created successfully");
       }
-      
+
       // Refresh list and close modal
       await fetchCategories();
       handleCloseModal();
-      
     } catch (e) {
       const errorMsg = getErrorMessage(e, "Failed to save category");
       console.error("Save error:", e); // Debug log
@@ -428,7 +436,7 @@ export default function Page() {
     if (!window.confirm("Are you sure you want to delete this category?")) {
       return;
     }
-    
+
     try {
       await categoriesAdmin.deleteCategory(id);
       console.log("Category deleted successfully");
@@ -457,7 +465,7 @@ export default function Page() {
                 {error}
               </div>
             )}
-            
+
             {/* Create button */}
             <div className="ml-auto">
               <Button onClick={() => handleOpenModal()}>
