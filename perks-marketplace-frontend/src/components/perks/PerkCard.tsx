@@ -1,31 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
-
+import type { Perk } from '@/lib/types';
+import axios from 'axios';
 const PerksCardSystem = () => {
-  const [perks, setPerks] = useState([
-    {
-      id: 1,
-      category: "ESSENTIALS",
-      title: "Growth Hacking Toolkit",
-      description: "Get 50% off for 12 months on all marketing automation tools.",
-      badge: "Claim Perk"
-    },
-    {
-      id: 2,
-      category: "COWORKING",
-      title: "City Hub Pass",
-      description: "20% off your first 3 months at any coworking space in AL & SG.",
-      badge: "Claim Perk"
-    },
-    {
-      id: 3,
-      category: "FINANCE",
-      title: "FinTech Suite",
-      description: "Zero fees on your first $80,000 of international transfers.",
-      badge: "Claim Perk"
-    }
-  ]);
-  
+  const [perks, setPerks] = useState<Perk[]>([]);
+
   useEffect(() => {
     const fetchPerks = async () => {
       const response = await fetch('https://perks-marketplace-backend.vercel.app/api/v1/perks?page=1&limit=12');
@@ -45,14 +24,16 @@ const PerksCardSystem = () => {
 
   const handleAddPerk = () => {
     if (newPerk.category && newPerk.title && newPerk.description) {
-      setPerks([...perks, { ...newPerk, id: Date.now() }]);
+      const createdPerk = { ...newPerk, _id: Date.now().toString() } as unknown as Perk;
+      setPerks([...perks, createdPerk]);
       setNewPerk({ category: '', title: '', description: '', badge: 'Claim Perk' });
       setShowForm(false);
     }
   };
 
-  const handleDelete = (id:number) => {
-    setPerks(perks.filter(perk => perk.id !== id));
+  const handleDelete = async (id:string) => {
+    setPerks(perks.filter(perk => perk._id !== id));
+    const request=await axios.delete(`https://perks-marketplace-backend.vercel.app/api/v1/perks/${id}`);
   };
 
   return (
@@ -67,7 +48,7 @@ const PerksCardSystem = () => {
         {/* Perks Grid */}
         <div className="grid grid-cols-3 gap-6 mb-8">
           {perks.map((perk) => (
-            <div key={perk.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+            <div key={perk._id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden">
               {/* Image Placeholder */}
               <div className="bg-gray-100 h-40 flex items-center justify-center">
                 <svg className="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,20 +59,20 @@ const PerksCardSystem = () => {
               {/* Card Content */}
               <div className="p-6">
                 <span className="text-xs font-semibold text-yellow-500 uppercase tracking-wide">
-                  {perk.category}
+                  {perk.categoryId?.name ?? 'Uncategorized'}
                 </span>
                 <h3 className="text-xl font-bold text-gray-900 mt-2 mb-3">
                   {perk.title}
                 </h3>
                 <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-                  {perk.description}
+                  {perk.shortDescription}
                 </p>
                 <div className="flex gap-2">
                   <button className="text-yellow-500 font-semibold text-sm hover:text-yellow-600 transition-colors">
-                    {perk.badge}
+                    {perk.redemptionMethod === 'Affiliate' ? 'Visit Affiliate' : perk.redemptionMethod === 'Coupon' ? 'Get Coupon' : 'Fill Form'}
                   </button>
                   <button 
-                    onClick={() => handleDelete(perk.id)}
+                    onClick={() => handleDelete(perk._id)}
                     className="ml-auto text-red-500 text-sm hover:text-red-600 transition-colors"
                   >
                     Delete

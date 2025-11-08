@@ -45,8 +45,7 @@ export interface Perk {
   validFrom?: string;
   validTo?: string;
   tags?: string[];
-  categoryId?: string;
-  category: { name: string };
+  categoryId?: { name: string };
   status: Status;
   featured: boolean;
   slug: string;
