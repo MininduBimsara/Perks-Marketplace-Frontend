@@ -17,16 +17,16 @@ export default function AdminLogin() {
 
   // Redirect content_editor to /cms/perks after login
   useEffect(() => {
-    if (user && user.role === "content_editor") {
-      if (pathname.startsWith("/cms") && !pathname.startsWith("/cms/perks")) {
-        router.push("/cms/perks");
-      } else if (!pathname.startsWith("/cms")) {
-        router.push("/cms/perks");
+    if (user) {
+      if (user.role === "content_editor") {
+        if (!pathname.startsWith("/cms")) {
+          router.push("/cms/perks");
+        }
+      } else {
+        if (pathname.startsWith("/cms")) {
+          router.push("/dashboard");
+        }
       }
-    }
-    // Restrict /cms/* pages to only content_editor
-    if (user && pathname.startsWith("/cms") && user.role !== "content_editor") {
-      router.push("/dashboard");
     }
   }, [user, pathname, router]);
 
@@ -34,12 +34,7 @@ export default function AdminLogin() {
     e.preventDefault();
     const success = await login({ email, password });
     if (success) {
-      if (user && user.role === "content_editor") {
-        router.push("/cms/perks");
-      } else {
-        router.push("/dashboard");
-      }
-      router.refresh();
+      // Redirection is handled in useEffect after user state updates
     }
   };
 
