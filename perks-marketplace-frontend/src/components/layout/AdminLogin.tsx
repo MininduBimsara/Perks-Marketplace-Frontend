@@ -15,20 +15,30 @@ export default function AdminLogin() {
   const pathname = usePathname();
   const { login, isLoading, error, user } = useAuth();
 
-  // Redirect content_editor to /cms/perks after login
+  // Redirect based on user role after login
   useEffect(() => {
-    if (user) {
-      if (user.role === "content_editor") {
-        if (!pathname.startsWith("/cms")) {
+    if (user && !isLoading) {
+      console.log(
+        "[AdminLogin] User detected:",
+        user,
+        "role:",
+        user.role,
+        "pathname:",
+        pathname
+      ); // Debug
+
+      // Only redirect from login page
+      if (pathname === "/login") {
+        if (user.role === "content_editor") {
+          console.log("[AdminLogin] Redirecting content_editor to /cms/perks"); // Debug
           router.push("/cms/perks");
-        }
-      } else {
-        if (pathname.startsWith("/cms")) {
+        } else {
+          console.log("[AdminLogin] Redirecting to /dashboard"); // Debug
           router.push("/dashboard");
         }
       }
     }
-  }, [user, pathname, router]);
+  }, [user, isLoading, pathname, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
