@@ -22,11 +22,13 @@ function CategoryFormModal({
   onClose,
   onSave,
   category,
+  parentCategories,
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: CategoryFormData) => void;
+  onSave: (data: FormData) => void;
   category: Category | null;
+  parentCategories: Category[];
 }) {
   const initial: CategoryFormData = useMemo(
     () =>
@@ -35,27 +37,97 @@ function CategoryFormModal({
             name: category.name,
             slug: category.slug,
             description: category.description || "",
-            order: category.order,
+            parentId: category.parentId || "",
+            color: category.color || "",
+            status: category.status || "active",
+            isVisible: category.isVisible ?? true,
+            isFeatured: category.isFeatured ?? false,
+            image: null,
+            seoTitle: category.seoTitle || "",
+            seoDescription: category.seoDescription || "",
+            seoKeywords: category.seoKeywords || [],
           }
-        : { name: "", slug: "", description: "", order: 0 },
+        : {
+            name: "",
+            slug: "",
+            description: "",
+            parentId: "",
+            color: "",
+            status: "active",
+            isVisible: true,
+            isFeatured: false,
+            image: null,
+            seoTitle: "",
+            seoDescription: "",
+            seoKeywords: [],
+          },
     [category]
   );
   const [formData, setFormData] = useState<CategoryFormData>(() => initial);
+  const [seoKeywordsInput, setSeoKeywordsInput] = useState("");
 
   useEffect(() => {
-    setFormData(initial);
+    // Avoid direct setState in effect body: use a microtask
+    Promise.resolve().then(() => {
+      setFormData(initial);
+      setSeoKeywordsInput((initial.seoKeywords || []).join(", "));
+    });
   }, [initial]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const target = e.target as
+      | HTMLInputElement
+      | HTMLTextAreaElement
+      | HTMLSelectElement;
+    const { name, value } = target;
+    if (target.type === "checkbox") {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: (target as HTMLInputElement).checked,
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files && e.target.files[0];
+    setFormData((prev) => ({ ...prev, image: file || null }));
+  };
+
+  const handleSeoKeywordsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSeoKeywordsInput(e.target.value);
+    setFormData((prev) => ({
+      ...prev,
+      seoKeywords: e.target.value
+        .split(",")
+        .map((kw) => kw.trim())
+        .filter(Boolean),
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    const data = new FormData();
+    data.append("name", formData.name);
+    data.append("slug", formData.slug);
+    if (formData.description) data.append("description", formData.description);
+    if (formData.parentId) data.append("parentId", formData.parentId);
+    if (formData.color) data.append("color", formData.color);
+    if (formData.status) data.append("status", formData.status);
+    data.append("isVisible", String(formData.isVisible));
+    data.append("isFeatured", String(formData.isFeatured));
+    if (formData.image) data.append("image", formData.image);
+    if (formData.seoTitle) data.append("seoTitle", formData.seoTitle);
+    if (formData.seoDescription)
+      data.append("seoDescription", formData.seoDescription);
+    if (formData.seoKeywords && formData.seoKeywords.length > 0)
+      formData.seoKeywords.forEach((kw) => data.append("seoKeywords[]", kw));
+    onSave(data);
   };
 
   return (
@@ -65,7 +137,11 @@ function CategoryFormModal({
       onClose={onClose}
       title={category ? "Edit Category" : "Create Category"}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4"
+        encType="multipart/form-data"
+      >
         <FormField label="Name">
           <Input
             name="name"
@@ -89,12 +165,83 @@ function CategoryFormModal({
             onChange={handleChange}
           />
         </FormField>
-        <FormField label="Order">
-          <Input
-            type="number"
-            name="order"
-            value={formData.order}
+        <FormField label="Parent Category">
+          <select
+            name="parentId"
+            value={formData.parentId || ""}
             onChange={handleChange}
+            className="w-full border rounded px-2 py-1"
+          >
+            <option value="">None</option>
+            {parentCategories.map((cat) => (
+              <option key={cat._id} value={cat._id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+        </FormField>
+        <FormField label="Color">
+          <Input
+            type="color"
+            name="color"
+            value={formData.color || "#000000"}
+            onChange={handleChange}
+          />
+        </FormField>
+        <FormField label="Status">
+          <select
+            name="status"
+            value={formData.status || "active"}
+            onChange={handleChange}
+            className="w-full border rounded px-2 py-1"
+          >
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </FormField>
+        <FormField label="Visible">
+          <input
+            type="checkbox"
+            name="isVisible"
+            checked={!!formData.isVisible}
+            onChange={handleChange}
+          />
+        </FormField>
+        <FormField label="Featured">
+          <input
+            type="checkbox"
+            name="isFeatured"
+            checked={!!formData.isFeatured}
+            onChange={handleChange}
+          />
+        </FormField>
+        <FormField label="Image">
+          <input
+            type="file"
+            name="image"
+            accept="image/*"
+            onChange={handleImageChange}
+          />
+        </FormField>
+        <FormField label="SEO Title">
+          <Input
+            name="seoTitle"
+            value={formData.seoTitle || ""}
+            onChange={handleChange}
+          />
+        </FormField>
+        <FormField label="SEO Description">
+          <Textarea
+            name="seoDescription"
+            value={formData.seoDescription || ""}
+            onChange={handleChange}
+          />
+        </FormField>
+        <FormField label="SEO Keywords (comma separated)">
+          <Input
+            name="seoKeywords"
+            value={seoKeywordsInput}
+            onChange={handleSeoKeywordsChange}
           />
         </FormField>
         <div className="flex justify-end space-x-2 pt-4">
@@ -112,22 +259,32 @@ export default function Page() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [parentCategories, setParentCategories] = useState<Category[]>([]);
 
   const fetchCategories = async () => {
     try {
       const res = await api.getAllCategories();
-      setCategories(res.data);
-    } catch (error) {
-      console.error("Failed to fetch categories", error);
+      setCategories(res.data.data || res.data); // handle both paginated and non-paginated
+    } catch {
+      // ignore
+    }
+  };
+
+  const fetchParentCategories = async () => {
+    try {
+      const res = await api.getRootCategories();
+      setParentCategories(res.data.data || res.data);
+    } catch {
+      setParentCategories([]);
     }
   };
 
   useEffect(() => {
-    // Defer to avoid synchronous setState warning in effect
-    const id = setTimeout(() => {
-      void fetchCategories();
-    }, 0);
-    return () => clearTimeout(id);
+    // Avoid direct setState in effect body: use a microtask
+    Promise.resolve().then(() => {
+      fetchCategories();
+      fetchParentCategories();
+    });
   }, []);
 
   const handleOpenModal = (category: Category | null = null) => {
@@ -140,17 +297,19 @@ export default function Page() {
     setEditingCategory(null);
   };
 
-  const handleSave = async (formData: CategoryFormData) => {
+  const handleSave = async (formData: FormData) => {
     try {
       if (editingCategory) {
+        // @ts-expect-error Accept FormData for multipart
         await api.updateCategory(editingCategory._id, formData);
       } else {
+        // @ts-expect-error Accept FormData for multipart
         await api.createCategory(formData);
       }
       fetchCategories();
       handleCloseModal();
-    } catch (error) {
-      console.error("Failed to save category", error);
+    } catch {
+      // ignore
     }
   };
 
@@ -182,7 +341,11 @@ export default function Page() {
               <TableHead>Name</TableHead>
               <TableHead>Slug</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead>Order</TableHead>
+              <TableHead>Parent</TableHead>
+              <TableHead>Color</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Visible</TableHead>
+              <TableHead>Featured</TableHead>
               <TableHead>Actions</TableHead>
             </TableHeader>
             <TableBody>
@@ -193,7 +356,26 @@ export default function Page() {
                     <code>{cat.slug}</code>
                   </TableCell>
                   <TableCell>{cat.description}</TableCell>
-                  <TableCell>{cat.order}</TableCell>
+                  <TableCell>
+                    {cat.parentId
+                      ? parentCategories.find((p) => p._id === cat.parentId)
+                          ?.name || "-"
+                      : "-"}
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      style={{
+                        background: cat.color || "#eee",
+                        padding: "2px 8px",
+                        borderRadius: 4,
+                      }}
+                    >
+                      {cat.color || "-"}
+                    </span>
+                  </TableCell>
+                  <TableCell>{cat.status || "active"}</TableCell>
+                  <TableCell>{cat.isVisible ? "Yes" : "No"}</TableCell>
+                  <TableCell>{cat.isFeatured ? "Yes" : "No"}</TableCell>
                   <TableCell className="space-x-2">
                     <Button
                       variant="ghost"
@@ -222,6 +404,7 @@ export default function Page() {
         onClose={handleCloseModal}
         onSave={handleSave}
         category={editingCategory}
+        parentCategories={parentCategories}
       />
     </>
   );

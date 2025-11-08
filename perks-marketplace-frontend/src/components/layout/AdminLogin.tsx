@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { usePathname } from "next/navigation";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -11,16 +12,29 @@ export default function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const router = useRouter();
-  const { login, isLoading, error } = useAuth();
+  const pathname = usePathname();
+  const { login, isLoading, error, user } = useAuth();
+
+  // Redirect content_editor to /cms/perks after login
+  useEffect(() => {
+    if (user) {
+      if (user.role === "content_editor") {
+        if (!pathname.startsWith("/cms")) {
+          router.push("/cms/perks");
+        }
+      } else {
+        if (pathname.startsWith("/cms")) {
+          router.push("/dashboard");
+        }
+      }
+    }
+  }, [user, pathname, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const success = await login({ email, password });
     if (success) {
-      // Use Next.js router for navigation
-      router.push("/dashboard");
-      // Force refresh to ensure clean state
-      router.refresh();
+      // Redirection is handled in useEffect after user state updates
     }
   };
 
@@ -87,7 +101,7 @@ export default function AdminLogin() {
                   size={20}
                 />
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
@@ -139,25 +153,18 @@ export default function AdminLogin() {
                 <div className="w-full border-t border-gray-200"></div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-            </div>
+            <div className="grid grid-cols-2 gap-4"></div>
           </form>
         </div>
       </div>
       {/* Right Side - Visual Content */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#1a3d35] to-[#2a4d45] items-center justify-center p-12">
         <div className="max-w-lg text-white">
-          <div className="mb-8">
-            
-            
-          </div>
+          <div className="mb-8"></div>
 
           {/* Stats */}
-          
 
           {/* Testimonial */}
-         
-          
         </div>
       </div>
     </div>
