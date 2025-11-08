@@ -90,23 +90,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       console.warn("[AuthContext] Login failed, response:", data); // Debug
       throw new Error(data?.message || "Login failed");
-
-      // Fallback mock: accept admin@example.com / password when API is unavailable
-      if (email === "admin@example.com" && password === "password") {
-        const mockToken = "mock-token";
-        localStorage.setItem("auth_token", mockToken);
-        localStorage.setItem("token", mockToken);
-        localStorage.setItem("auth_user", JSON.stringify({ email }));
-        localStorage.setItem("user", JSON.stringify({ email }));
-        setUser({ email });
-        setIsAuthenticated(true);
-        setIsLoading(false);
-        console.log("[AuthContext] Mock login successful"); // Debug
-        return true;
-      } else {
-        console.warn("[AuthContext] Invalid credentials for:", email); // Debug
-        throw new Error("Invalid credentials");
-      }
     } catch (err: unknown) {
       console.error("[AuthContext] Login error:", err); // Debug
       setError((err as Error)?.message || "Login error");
