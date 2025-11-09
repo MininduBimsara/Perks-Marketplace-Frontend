@@ -189,6 +189,13 @@ export const siteSettings = {
   getStaticPage: (slug: string) => api.get(`/v1/pages/${slug}`),
   updateStaticPage: (slug: string, data: unknown) =>
     api.put(`/v1/admin/pages/${slug}`, data),
+  // Submit contact form
+  submitContactForm: (data: {
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+  }) => api.post("/v1/contact/submit", data),
 };
 
 // --- FILE UPLOAD ---

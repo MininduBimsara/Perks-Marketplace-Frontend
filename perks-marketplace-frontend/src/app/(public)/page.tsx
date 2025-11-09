@@ -225,7 +225,7 @@ export default function HomePage() {
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="hover:text-yellow-400 transition">
+                    <a href="/contact" className="hover:text-yellow-400 transition">
                       Contact
                     </a>
                   </li>
