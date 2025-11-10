@@ -6,7 +6,7 @@ import {
   SiteSettings,
 } from "@/lib/types";
 
-const API_BASE_URL = "/api"; // The proxy is configured at /api
+const API_BASE_URL = "https://perks-marketplace-backend.vercel.app/api"; // The proxy is configured at /api
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -95,7 +95,7 @@ export const perksAdmin = {
 // --- PERKS (PUBLIC) ---
 export const perksPublic = {
   getActivePerks: () => api.get("/v1/perks"),
-  getPerkById: (perkId: string) => api.get(`/v1/perks/${perkId}`),
+  getPerkById: (perkId: string) => api.get(`/v1/perks/${perkId}?page=1&limit=20`),
   getFeaturedPerks: () => api.get("/v1/perks/featured"),
   searchPerks: (query: string) => api.get(`/v1/perks/search?q=${query}`),
   getPerkBySlug: (slug: string) => api.get(`/v1/perks/slug/${slug}`),

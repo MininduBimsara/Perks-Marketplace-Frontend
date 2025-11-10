@@ -1,8 +1,60 @@
 "use client";
-import PerksCardSystem from "@/components/perks/PerkCard";
+import PerksCard from "@/components/perks/PerkCardClickable";
+import Link from "next/link";
 import { Search, Sparkles, Link as LinkIcon } from "lucide-react";
-
+import PerksCardSystem from "@/components/perks/PerkCard";
+import type { Perk } from "@/lib/types";
+import { useEffect, useState } from "react";
+import { perksPublic } from "@/services/api";
 export default function HomePage() {
+  const [featuredPerks, setFeaturedPerks] = useState<Perk[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFeaturedPerks = async () => {
+      try {
+        setLoading(true);
+        console.log('Fetching perks for homepage...');
+        
+        // Try to fetch perks from the API
+        const response = await perksPublic.getActivePerks();
+        console.log('Homepage perks response:', response);
+        const allPerks = response.data?.data || response.data || [];
+        
+        // Get featured perks or first 3 perks for showcase
+        const featured = allPerks.filter((perk: Perk) => perk.featured).slice(0, 3);
+        const perksToShow = featured.length > 0 ? featured : allPerks.slice(0, 3);
+        
+        console.log('Perks to show on homepage:', perksToShow);
+        setFeaturedPerks(perksToShow);
+      } catch (error) {
+        console.error('Failed to fetch perks for homepage:', error);
+        
+        // Fallback to direct API call
+        try {
+          console.log('Trying fallback API call...');
+          const fallbackResponse = await fetch('/api/v1/perks?page=1&limit=6');
+          console.log('Fallback response status:', fallbackResponse.status);
+          
+          if (fallbackResponse.ok) {
+            const fallbackData = await fallbackResponse.json();
+            console.log('Fallback data:', fallbackData);
+            const allPerks = fallbackData.data || [];
+            const featured = allPerks.filter((perk: Perk) => perk.featured).slice(0, 3);
+            const perksToShow = featured.length > 0 ? featured : allPerks.slice(0, 3);
+            setFeaturedPerks(perksToShow);
+          }
+        } catch (fallbackError) {
+          console.error('Fallback API call also failed:', fallbackError);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFeaturedPerks();
+  }, []);
+
   // No auth or router needed
   const partnerLogos = [
     { name: "Zoom", position: "top-12 left-8" },
@@ -49,12 +101,18 @@ export default function HomePage() {
                   big on tools that grow your business.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <button className="bg-yellow-400 text-[#1a3d35] px-8 py-4 rounded-lg font-semibold hover:bg-yellow-500 transition text-lg">
+                  <Link 
+                    href="/perks"
+                    className="bg-yellow-400 text-[#1a3d35] px-8 py-4 rounded-lg font-semibold hover:bg-yellow-500 transition text-lg text-center"
+                  >
                     Explore All Perks
-                  </button>
-                  <button className="bg-[#1a3d35] text-white px-8 py-4 rounded-lg font-semibold hover:bg-[#2a4d45] transition text-lg">
+                  </Link>
+                  <Link 
+                    href="/partners"
+                    className="bg-[#1a3d35] text-white px-8 py-4 rounded-lg font-semibold hover:bg-[#2a4d45] transition text-lg text-center"
+                  >
                     List Your Perks
-                  </button>
+                  </Link>
                 </div>
               </div>
 
@@ -125,17 +183,61 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Partner Showcase Section */}
+        {/* Featured Perks Showcase Section */}
         <section className="py-20 bg-[#f5f1e3]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <PerksCardSystem />
               <h2 className="text-4xl font-bold text-[#1a3d35] mb-4">
-                Trusted by Leading Brands
+                Featured Perks
               </h2>
-              <p className="text-gray-600 text-lg">
-                Exclusive partnerships with top SaaS and service providers
+              <p className="text-gray-600 text-lg mb-8">
+                Discover exclusive deals from our trusted partners
               </p>
+
+              {/* Featured Perks Grid */}
+              {loading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500"></div>
+                  <span className="ml-3 text-gray-600">Loading amazing perks...</span>
+                </div>
+              ) : featuredPerks.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+                  {featuredPerks.map((perk) => (
+                    <PerksCard
+                      key={perk._id}
+                      perk={perk}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-600 mb-4">No featured perks available at the moment.</p>
+                  <Link 
+                    href="/perks" 
+                    className="inline-block bg-yellow-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-yellow-600 transition-colors"
+                  >
+                    Browse All Perks
+                  </Link>
+                </div>
+              )}
+
+              <div className="text-center">
+                <Link 
+                  href="/perks" 
+                  className="inline-flex items-center bg-yellow-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-yellow-600 transition-colors text-lg"
+                >
+                  View All Perks
+                  <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </Link>
+              </div>
+            </div>
+
+            <div className="text-center mb-8">
+              <h3 className="text-2xl font-bold text-[#1a3d35] mb-4">
+                Trusted by Leading Brands
+              </h3>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
@@ -172,9 +274,12 @@ export default function HomePage() {
               Join thousands of founders and remote workers accessing exclusive
               perks
             </p>
-            <button className="bg-yellow-400 text-[#1a3d35] px-10 py-4 rounded-lg font-semibold hover:bg-yellow-500 transition text-lg">
+            <Link 
+              href="/perks" 
+              className="bg-yellow-400 text-[#1a3d35] px-10 py-4 rounded-lg font-semibold hover:bg-yellow-500 transition text-lg inline-block"
+            >
               Get Started Free
-            </button>
+            </Link>
           </div>
         </section>
 
