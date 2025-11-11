@@ -22,21 +22,31 @@ export default function Page() {
   const router = useRouter();
   const [perks, setPerks] = useState<Perk[]>([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  const fetchPerks = async () => {
+    try {
+      setLoading(true);
+      const res = await api.getAllPerks();
+      console.log("Perks API response:", res.data); // Debug
+      // Handle different response structures
+      const perksList = res.data?.data || res.data || [];
+      setPerks(Array.isArray(perksList) ? perksList : []);
+    } catch (error) {
+      console.error("Failed to fetch perks", error);
+      setPerks([]); // Set empty array on error
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchPerks();
   }, []);
 
-  const fetchPerks = async () => {
-    try {
-      const res = await api.getAllPerks();
-      setPerks(res.data);
-    } catch (error) {
-      console.error("Failed to fetch perks", error);
-    }
-  };
-
   const filteredPerks = useMemo(() => {
+    // Ensure perks is always an array
+    if (!Array.isArray(perks)) return [];
     return perks.filter((perk) =>
       perk.title.toLowerCase().includes(search.toLowerCase())
     );
@@ -80,45 +90,55 @@ export default function Page() {
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <Table>
-          <TableHeader>
-            <TableHead>Title</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Location</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Featured</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableHeader>
-          <TableBody>
-            {filteredPerks.map((perk) => (
-              <TableRow key={perk._id}>
-                <TableCell className="font-medium">{perk.title}</TableCell>
-                <TableCell>
-                  <StatusBadge status={perk.status} />
-                </TableCell>
-                <TableCell>{perk.location}</TableCell>
-                <TableCell>{perk.category.name}</TableCell>
-                <TableCell>{perk.featured ? "Yes" : "No"}</TableCell>
-                <TableCell className="space-x-2">
-                  <Button
-                    variant="ghost"
-                    className="p-2"
-                    onClick={() => handleEdit(perk._id)}
-                  >
-                    <Icon name="edit" className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="p-2 text-red-600 hover:bg-red-100"
-                    onClick={() => handleDelete(perk._id)}
-                  >
-                    <Icon name="trash" className="w-4 h-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        {loading ? (
+          <div className="p-6 text-center text-gray-600">Loading perks...</div>
+        ) : filteredPerks.length === 0 ? (
+          <div className="p-6 text-center text-gray-600">
+            {search
+              ? "No perks found matching your search."
+              : "No perks available. Create your first perk!"}
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableHead>Title</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Featured</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableHeader>
+            <TableBody>
+              {filteredPerks.map((perk) => (
+                <TableRow key={perk._id}>
+                  <TableCell className="font-medium">{perk.title}</TableCell>
+                  <TableCell>
+                    <StatusBadge status={perk.status} />
+                  </TableCell>
+                  <TableCell>{perk.location}</TableCell>
+                  <TableCell>{perk.category?.name || "N/A"}</TableCell>
+                  <TableCell>{perk.isFeatured ? "Yes" : "No"}</TableCell>
+                  <TableCell className="space-x-2">
+                    <Button
+                      variant="ghost"
+                      className="p-2"
+                      onClick={() => handleEdit(perk._id)}
+                    >
+                      <Icon name="edit" className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="p-2 text-red-600 hover:bg-red-100"
+                      onClick={() => handleDelete(perk._id)}
+                    >
+                      <Icon name="trash" className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </CardContent>
     </Card>
   );

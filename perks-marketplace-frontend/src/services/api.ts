@@ -1,12 +1,14 @@
 import axios from "axios";
-import {
-  CategoryFormData,
-  PerkFormData,
-  PerkSEO,
-  SiteSettings,
-} from "@/lib/types";
+import { PerkFormData, PerkSEO, SiteSettings } from "@/lib/types";
 
+<<<<<<< HEAD
 const API_BASE_URL = "https://perks-marketplace-backend.vercel.app/api"; // The proxy is configured at /api
+=======
+// Use environment variable or default to production backend URL
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "https://perks-marketplace-backend.vercel.app/api";
+>>>>>>> dbe65644506dbbc255a41698f82ba132788916a5
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -38,15 +40,37 @@ export const auth = {
 
 // --- CATEGORIES (ADMIN) ---
 export const categoriesAdmin = {
-  createCategory: (data: CategoryFormData) => api.post("/v1/categories", data),
-  getAllCategories: () => api.get("/v1/categories"),
+  // Create expects multipart/form-data
+  createCategory: (data: FormData) =>
+    api.post("/v1/categories", data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+  // Accept optional query params for pagination/filters
+  getAllCategories: (
+    params?: Partial<{
+      page: number;
+      limit: number;
+      status: string;
+      level: number;
+      parentId: string;
+      search: string;
+      isVisible: boolean;
+      showInMenu: boolean;
+      isFeatured: boolean;
+      includeRelations: boolean;
+    }>
+  ) => api.get("/v1/categories", { params }),
   getCategoryById: (id: string) => api.get(`/v1/categories/${id}`),
-  updateCategory: (id: string, data: CategoryFormData) =>
-    api.put(`/v1/categories/${id}`, data),
+  // Update supports the same multipart body as create
+  updateCategory: (id: string, data: FormData) =>
+    api.put(`/v1/categories/${id}`, data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
   deleteCategory: (id: string) => api.delete(`/v1/categories/${id}`),
   validateSlug: (slug: string) =>
     api.get(`/v1/categories/validate-slug/${slug}`),
-  generateSlug: () => api.post("/v1/categories/generate-slug"),
+  generateSlug: (name: string) =>
+    api.post("/v1/categories/generate-slug", { name }),
   getBreadcrumb: (id: string) => api.get(`/v1/categories/${id}/breadcrumb`),
   getRootCategories: () => api.get("/v1/categories/root"),
   getSubcategories: (parentId: string) =>
@@ -169,6 +193,13 @@ export const siteSettings = {
   getStaticPage: (slug: string) => api.get(`/v1/pages/${slug}`),
   updateStaticPage: (slug: string, data: unknown) =>
     api.put(`/v1/admin/pages/${slug}`, data),
+  // Submit contact form
+  submitContactForm: (data: {
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+  }) => api.post("/v1/contact/submit", data),
 };
 
 // --- FILE UPLOAD ---

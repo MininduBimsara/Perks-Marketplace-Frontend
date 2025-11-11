@@ -1,8 +1,18 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 
-type LoginCredentials = { email: string; password: string; rememberMe?: boolean };
+type LoginCredentials = {
+  email: string;
+  password: string;
+  rememberMe?: boolean;
+};
 
 type AuthContextType = {
   isAuthenticated: boolean;
@@ -25,7 +35,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // initialize from localStorage
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (token) {
       // simple presence indicates logged in; in real app call /auth/me to validate
       setIsAuthenticated(true);
@@ -39,48 +50,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(false);
   }, []);
 
-  const login = async ({ email, password }: LoginCredentials): Promise<boolean> => {
+  const login = async ({
+    email,
+    password,
+  }: LoginCredentials): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
+    console.log("[AuthContext] Attempting login for:", email); // Debug
     try {
       // Attempt real API via Next rewrite (/api -> backend). This keeps auth and data calls on the same origin/backend.
       // Configure next.config.mjs NEXT_PUBLIC_API_BASE_URL to your backend origin.
-      const res = await fetch(`https://perks-marketplace-backend.vercel.app/api/v1/auth/login`, {
+      const res = await fetch(
+        `https://perks-marketplace-backend.vercel.app/api/v1/auth/login`,
+        {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
-        });
-        const data = await res.json();
-        if (res.ok && data.data.token) {
-          // write token to both keys to keep compatibility with existing services
-          localStorage.setItem("auth_token", data.data.token);
-          localStorage.setItem("token", data.data.token);
-          localStorage.setItem("authentication_user", JSON.stringify(data.user || { email }));
-          // also write a generic user key for other code that may read it
-          localStorage.setItem("user", JSON.stringify(data.user || { email }));
-          setUser(data.user || { email });
-          setIsAuthenticated(true);
-          setIsLoading(false);
-          return true;
         }
-        throw new Error(data?.message || "Login failed");
-      
-      // Fallback mock: accept admin@example.com / password when API is unavailable
-      if (email === "admin@example.com" && password === "password") {
-        const mockToken = "mock-token";
-        localStorage.setItem("auth_token", mockToken);
-        localStorage.setItem("token", mockToken);
-        localStorage.setItem("auth_user", JSON.stringify({ email }));
-        localStorage.setItem("user", JSON.stringify({ email }));
-        setUser({ email });
+      );
+      const data = await res.json();
+      console.log("[AuthContext] Login response:", data); // Debug
+
+      // Extract token and user from response (handle both data.data and data.token formats)
+      const token = data?.data?.token || data?.token;
+      const user = data?.data?.user || data?.user;
+
+      if (res.ok && token && user) {
+        // write token to both keys to keep compatibility with existing services
+        localStorage.setItem("auth_token", token);
+        localStorage.setItem("token", token);
+        localStorage.setItem("authentication_user", JSON.stringify(user));
+        // also write a generic user key for other code that may read it
+        localStorage.setItem("user", JSON.stringify(user));
+        setUser(user);
         setIsAuthenticated(true);
         setIsLoading(false);
+        console.log("[AuthContext] Login successful, user role:", user.role); // Debug
         return true;
-      } else {
-        throw new Error("Invalid credentials");
       }
-    } catch (err: any) {
-      setError(err?.message || "Login error");
+      console.warn("[AuthContext] Login failed, response:", data); // Debug
+      throw new Error(data?.message || "Login failed");
+    } catch (err: unknown) {
+      console.error("[AuthContext] Login error:", err); // Debug
+      setError((err as Error)?.message || "Login error");
       setIsAuthenticated(false);
       setUser(null);
       setIsLoading(false);
@@ -100,7 +112,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const clearError = () => setError(null);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, user, error, login, logout, clearError }}>
+    <AuthContext.Provider
+      value={{
+        isAuthenticated,
+        isLoading,
+        user,
+        error,
+        login,
+        logout,
+        clearError,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
