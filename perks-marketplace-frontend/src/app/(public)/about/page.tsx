@@ -1,3 +1,4 @@
+'use client';
 import React, { useState, useEffect } from 'react';
 import { Lightbulb, Users, BookOpen, Rocket, Pencil, Wifi } from 'lucide-react';
 
@@ -153,7 +154,7 @@ export default function AboutPage() {
       </div>
 
       {/* CTA Section */}
-      <div className={`bg-gradient-to-r from-indigo-600 to-purple-600 py-16 mb-16 transition-all duration-700 delay-[1300ms] ${
+      <div className={`bg-emerald-800 py-16 mb-16 transition-all duration-700 delay-[1300ms] ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}>
         <div className="max-w-4xl mx-auto text-center px-4">

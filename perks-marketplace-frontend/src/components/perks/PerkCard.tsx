@@ -59,7 +59,7 @@ const PerksCardSystem = () => {
               {/* Card Content */}
               <div className="p-6">
                 <span className="text-xs font-semibold text-yellow-500 uppercase tracking-wide">
-                  {perk.categoryId?.name ?? 'Uncategorized'}
+                  {perk.categoryName ?? 'Uncategorized'}
                 </span>
                 <h3 className="text-xl font-bold text-gray-900 mt-2 mb-3">
                   {perk.title}

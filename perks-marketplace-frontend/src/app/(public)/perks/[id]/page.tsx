@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { perksPublic } from '@/services/api';
 import { Perk } from '@/lib/types';
 import PerkDetail from '@/components/perks/PerkDetail';
+const PerkDetailComponent = PerkDetail as any;
 
 export default function PerkDetailPage() {
   const params = useParams();
@@ -107,11 +108,10 @@ export default function PerkDetailPage() {
       </div>
     );
   }
-
   return (
-    <PerkDetail 
-      perk={perk} 
+    <PerkDetailComponent
+      perk={perk}
       onClose={() => router.push('/perks')}
     />
   );
-}
+} 

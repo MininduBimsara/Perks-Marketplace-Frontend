@@ -1,14 +1,7 @@
 import axios from "axios";
 import { PerkFormData, PerkSEO, SiteSettings } from "@/lib/types";
 
-<<<<<<< HEAD
 const API_BASE_URL = "https://perks-marketplace-backend.vercel.app/api"; // The proxy is configured at /api
-=======
-// Use environment variable or default to production backend URL
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "https://perks-marketplace-backend.vercel.app/api";
->>>>>>> dbe65644506dbbc255a41698f82ba132788916a5
 
 const api = axios.create({
   baseURL: API_BASE_URL,

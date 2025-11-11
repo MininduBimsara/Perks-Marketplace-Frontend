@@ -75,7 +75,7 @@ const PerkCard: React.FC<PerkCardProps> = ({ perk, onClick, showActions = false 
       <div className="p-6">
         {/* Category */}
         <span className="text-xs font-semibold text-yellow-600 uppercase tracking-wide">
-          {perk.categoryId?.name || 'Uncategorized'}
+          {perk.categoryName || 'Uncategorized'}
         </span>
         
         {/* Title */}

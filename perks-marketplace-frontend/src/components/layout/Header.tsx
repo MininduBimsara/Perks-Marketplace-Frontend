@@ -36,6 +36,9 @@ export default function Header() {
             <Link href="/journal" className="hover:text-yellow-400 transition">
               Journal
             </Link>
+            <Link href="/about" className="hover:text-yellow-400 transition">
+              About
+            </Link>
           </div>
 
           {/* CTA Button */}

@@ -55,7 +55,6 @@ export interface CategoryFormData {
 
 export interface PerkSEO {
   title: string;
-<<<<<<< HEAD
   description: string;
   keywords: string[];
   customMetaTags: any[];
@@ -106,7 +105,6 @@ export interface Metrics {
 export interface Approval {
   status: string;
   notes: any[];
-=======
   metaDescription: string;
   description?: string;
   keywords?: string[];
@@ -114,14 +112,12 @@ export interface Approval {
   ogDescription?: string;
   canonicalUrl?: string;
   customMetaTags?: { name: string; content: string }[];
->>>>>>> dbe65644506dbbc255a41698f82ba132788916a5
 }
 
 export interface Perk {
   _id: string;
   id: string;
   title: string;
-<<<<<<< HEAD
   description: string;
   shortDescription: string;
   categoryId: string | { name: string };
@@ -138,24 +134,21 @@ export interface Perk {
   updatedBy: string;
   createdAt: string;
   updatedAt: string;
-  slug: string;
+  
   discountPercentage: number;
   remainingQuantity: number;
   isAvailable: boolean;
   isExpired: boolean;
   savingsAmount: number;
-  vendor: Vendor;
-  originalPrice: PriceObject;
-  discountedPrice: PriceObject;
+ 
   images: Images;
-  redemption: Redemption;
-  availability: Availability;
-  seo: PerkSEO;
+ 
+  
   metrics: Metrics;
   approval: Approval;
   
   // Legacy fields for backward compatibility
-  location?: string;
+ 
   redemptionMethod?: "Affiliate" | "Coupon" | "Form";
   affiliateUrl?: string;
   couponCode?: string;
@@ -172,12 +165,8 @@ export interface Perk {
   currentRedemptions?: number;
   averageRating?: number;
   reviewCount?: number;
-=======
-  description?: string;
-  shortDescription?: string;
   longDescription?: string;
   location: string;
-  categoryId?: string;
   category: { name: string };
   vendor: {
     name: string;
@@ -185,7 +174,6 @@ export interface Perk {
     website?: string;
     description?: string;
   };
-  value?: string;
   originalPrice?: { amount: number; currency: string };
   discountedPrice?: { amount: number; currency: string };
   redemption: {
@@ -201,20 +189,12 @@ export interface Perk {
     startDate?: string;
     endDate?: string;
   };
-  tags?: string[];
-  features?: string[];
-  status: Status;
-  isVisible: boolean;
-  isFeatured: boolean;
-  isExclusive: boolean;
-  priority?: number;
-  clientId?: string;
+
   mainImage?: string;
   vendorLogo?: string;
   gallery?: string[];
   slug: string;
   seo: PerkSEO;
->>>>>>> dbe65644506dbbc255a41698f82ba132788916a5
 }
 
 export interface PerkFormData {
@@ -313,8 +293,24 @@ export interface LeadFormData {
 export interface BlogPost {
   _id: string;
   title: string;
+  slug: string;
+  content: string;
+  excerpt: string;
   status: Status;
   publishedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  author: {
+    name: string;
+    email: string;
+    avatar?: string;
+  };
+  featuredImage?: string;
+  tags: string[];
+  category: string;
+  readingTime?: number;
+  views?: number;
+  likes?: number;
 }
 
 export interface SiteSettings {
