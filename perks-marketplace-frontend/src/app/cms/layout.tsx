@@ -2,19 +2,32 @@
 import React, { useEffect } from "react";
 import CmsSidebar from "@/components/layout/CmsSidebar";
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Debug: Log when CMS layout is triggered
+  console.log(
+    "[CMS LAYOUT] user:",
+    user?.role,
+    "isAuthenticated:",
+    isAuthenticated,
+    "isLoading:",
+    isLoading
+  );
 
   useEffect(() => {
-    if (!isLoading) {
-      if (!user || user.role !== "content_editor") {
-        router.push("/login");
-      }
+    if (isLoading) return;
+
+    const isCmsRoute = pathname?.startsWith("/cms");
+    if (isCmsRoute && (!user || user.role !== "content_editor")) {
+      console.log("[CMS LAYOUT] Redirecting to /login - not a content_editor");
+      router.push("/login");
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, pathname, router]);
 
   if (isLoading || !user || user.role !== "content_editor") {
     return null;
