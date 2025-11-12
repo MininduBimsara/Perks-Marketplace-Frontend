@@ -36,13 +36,16 @@ export default function Header() {
             <Link href="/journal" className="hover:text-yellow-400 transition">
               Journal
             </Link>
+            <Link href="/about" className="hover:text-yellow-400 transition">
+              About
+            </Link>
           </div>
 
           {/* CTA Button */}
           <div className="hidden md:block">
-            <button className="bg-yellow-400 text-[#1a3d35] px-6 py-2 rounded-lg font-semibold hover:bg-yellow-500 transition">
+            <Link href="/perks" className="bg-yellow-400 text-[#1a3d35] px-6 py-2 rounded-lg font-semibold hover:bg-yellow-500 transition block">
               Browse Perks
-            </button>
+            </Link>
           </div>
           {/* No auth buttons for public users */}
 
@@ -59,21 +62,21 @@ export default function Header() {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-[#2a4d45]">
             <div className="flex flex-col space-y-4">
-              <a href="#perks" className="hover:text-yellow-400 transition">
+              <Link href="/perks" className="hover:text-yellow-400 transition">
                 Perks
-              </a>
-              <a
-                href="#how-it-works"
+              </Link>
+              <Link
+                href="/how-it-works"
                 className="hover:text-yellow-400 transition"
               >
                 How It Works
-              </a>
-              <a href="#journal" className="hover:text-yellow-400 transition">
+              </Link>
+              <Link href="/journal" className="hover:text-yellow-400 transition">
                 Journal
-              </a>
-              <button className="bg-yellow-400 text-[#1a3d35] px-6 py-2 rounded-lg font-semibold hover:bg-yellow-500 transition">
+              </Link>
+              <Link href="/perks" className="bg-yellow-400 text-[#1a3d35] px-6 py-2 rounded-lg font-semibold hover:bg-yellow-500 transition block text-center">
                 Browse Perks
-              </button>
+              </Link>
             </div>
           </div>
         )}
