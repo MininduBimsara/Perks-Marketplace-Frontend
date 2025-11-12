@@ -8,7 +8,7 @@ import React from "react";
 type NavItem = {
   href: string;
   label: string;
-  icon: "dashboard" | "users" | "category" | "leads" | "reports" | "settings";
+  icon: "dashboard" | "search" | "users" | "category" | "leads" | "reports" | "settings";
 };
 
 // Admin routes are nested under /admin in the app router.
@@ -18,6 +18,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/leads", label: "Leads", icon: "leads" },
   { href: "/categories", label: "Categories", icon: "category" },
   { href: "/reports", label: "Reports", icon: "reports" },
+  { href: "/seo", label: "SEO", icon: "search" },
   { href: "/settings", label: "Settings", icon: "settings" },
 ];
 
