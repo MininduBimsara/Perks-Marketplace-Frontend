@@ -33,7 +33,10 @@ export default function SeoSettingsPage() {
       const res = await seoService.getSeoSettings();
       setSettings(res.data.data || res.data);
     } catch (error: any) {
-      showMessage("error", error?.response?.data?.message || "Failed to load SEO settings");
+      showMessage(
+        "error",
+        error?.response?.data?.message || "Failed to load SEO settings"
+      );
     } finally {
       setLoading(false);
     }
@@ -48,7 +51,7 @@ export default function SeoSettingsPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    
+
     // Handle nested fields (e.g., organization.name)
     if (name.includes(".")) {
       const keys = name.split(".");
@@ -64,7 +67,10 @@ export default function SeoSettingsPage() {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: "ogImage" | "logo") => {
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    type: "ogImage" | "logo"
+  ) => {
     const file = e.target.files?.[0];
     if (file) {
       if (type === "ogImage") setOgImageFile(file);
@@ -79,24 +85,35 @@ export default function SeoSettingsPage() {
     try {
       // Build FormData for multipart upload
       const formData = new FormData();
-      
+
       // Add text fields
       if (settings.siteName) formData.append("siteName", settings.siteName);
-      if (settings.siteDescription) formData.append("siteDescription", settings.siteDescription);
+      if (settings.siteDescription)
+        formData.append("siteDescription", settings.siteDescription);
       if (settings.siteUrl) formData.append("siteUrl", settings.siteUrl);
-      if (settings.defaultMetaTitle) formData.append("defaultMetaTitle", settings.defaultMetaTitle);
-      if (settings.defaultMetaDescription) formData.append("defaultMetaDescription", settings.defaultMetaDescription);
-      
+      if (settings.defaultMetaTitle)
+        formData.append("defaultMetaTitle", settings.defaultMetaTitle);
+      if (settings.defaultMetaDescription)
+        formData.append(
+          "defaultMetaDescription",
+          settings.defaultMetaDescription
+        );
+
       // Add keywords as array
-      if (settings.defaultMetaKeywords && Array.isArray(settings.defaultMetaKeywords)) {
-        settings.defaultMetaKeywords.forEach((kw: string) => 
+      if (
+        settings.defaultMetaKeywords &&
+        Array.isArray(settings.defaultMetaKeywords)
+      ) {
+        settings.defaultMetaKeywords.forEach((kw: string) =>
           formData.append("defaultMetaKeywords[]", kw)
         );
       }
 
       // Add social media
-      if (settings.twitterSite) formData.append("twitterSite", settings.twitterSite);
-      if (settings.twitterCreator) formData.append("twitterCreator", settings.twitterCreator);
+      if (settings.twitterSite)
+        formData.append("twitterSite", settings.twitterSite);
+      if (settings.twitterCreator)
+        formData.append("twitterCreator", settings.twitterCreator);
 
       // Add organization data as JSON string
       if (settings.organization) {
@@ -105,13 +122,22 @@ export default function SeoSettingsPage() {
 
       // Add settings as JSON strings
       if (settings.sitemapSettings) {
-        formData.append("sitemapSettings", JSON.stringify(settings.sitemapSettings));
+        formData.append(
+          "sitemapSettings",
+          JSON.stringify(settings.sitemapSettings)
+        );
       }
       if (settings.robotsSettings) {
-        formData.append("robotsSettings", JSON.stringify(settings.robotsSettings));
+        formData.append(
+          "robotsSettings",
+          JSON.stringify(settings.robotsSettings)
+        );
       }
       if (settings.schemaSettings) {
-        formData.append("schemaSettings", JSON.stringify(settings.schemaSettings));
+        formData.append(
+          "schemaSettings",
+          JSON.stringify(settings.schemaSettings)
+        );
       }
 
       // Add file uploads
@@ -120,15 +146,18 @@ export default function SeoSettingsPage() {
 
       await seoService.updateSeoSettings(formData);
       showMessage("success", "SEO settings updated successfully!");
-      
+
       // Refresh settings
       await fetchSettings();
-      
+
       // Clear file inputs
       setOgImageFile(null);
       setLogoFile(null);
     } catch (error: any) {
-      showMessage("error", error?.response?.data?.message || "Failed to update settings");
+      showMessage(
+        "error",
+        error?.response?.data?.message || "Failed to update settings"
+      );
     } finally {
       setSaving(false);
     }
@@ -139,7 +168,10 @@ export default function SeoSettingsPage() {
       await seoService.regenerateSitemap();
       showMessage("success", "Sitemap regenerated successfully!");
     } catch (error: any) {
-      showMessage("error", error?.response?.data?.message || "Failed to regenerate sitemap");
+      showMessage(
+        "error",
+        error?.response?.data?.message || "Failed to regenerate sitemap"
+      );
     }
   };
 
@@ -148,7 +180,10 @@ export default function SeoSettingsPage() {
       await seoService.regenerateRobotsTxt();
       showMessage("success", "Robots.txt regenerated successfully!");
     } catch (error: any) {
-      showMessage("error", error?.response?.data?.message || "Failed to regenerate robots.txt");
+      showMessage(
+        "error",
+        error?.response?.data?.message || "Failed to regenerate robots.txt"
+      );
     }
   };
 
@@ -365,7 +400,9 @@ export default function SeoSettingsPage() {
                 <p className="text-sm text-gray-600">
                   Last generated:{" "}
                   {settings.sitemapSettings?.lastGenerated
-                    ? new Date(settings.sitemapSettings.lastGenerated).toLocaleString()
+                    ? new Date(
+                        settings.sitemapSettings.lastGenerated
+                      ).toLocaleString()
                     : "Never"}
                 </p>
               </div>
@@ -401,7 +438,7 @@ export default function SeoSettingsPage() {
               <div className="flex-1">
                 <p className="text-sm text-blue-900">
                   View your sitemap at:{" "}
-                  
+                  <a
                     href={`${settings.siteUrl}/sitemap.xml`}
                     target="_blank"
                     rel="noopener noreferrer"
