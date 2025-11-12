@@ -2,11 +2,18 @@ const nextConfig = {
   reactStrictMode: false,
   swcMinify: true,
   images: {
-    domains: ["cdn.example.com", "res.cloudinary.com", "example.com"], // Whitelist image domains
+    domains: [
+      "cdn.example.com",
+      "res.cloudinary.com",
+      "example.com",
+      "perks-marketplace-backend.vercel.app", // Add backend domain for images
+    ],
   },
   // Environment variables accessible in the browser
   env: {
-    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
+    NEXT_PUBLIC_API_BASE_URL:
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      "https://perks-marketplace-backend.vercel.app",
     NEXT_PUBLIC_GA4_ID: process.env.NEXT_PUBLIC_GA4_ID,
     NEXT_PUBLIC_META_PIXEL_ID: process.env.NEXT_PUBLIC_META_PIXEL_ID,
   },
@@ -16,15 +23,22 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Rewrites only work for same domain, not for cross-origin requests
+  // Since backend is on different Vercel deployment, we'll handle API calls directly
   async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: "https://perks-marketplace-backend.vercel.app/api/:path*",
-      },
-    ];
+    // Only use rewrites in local development if you have local backend
+    if (process.env.NODE_ENV === "development" && process.env.LOCAL_BACKEND) {
+      return [
+        {
+          source: "/api/:path*",
+          destination: "http://localhost:3001/api/:path*", // Local backend
+        },
+      ];
+    }
+    return [];
   },
-  // Add CORS headers for development
+  // CORS headers - these only apply to routes served by this Next.js app
+  // Your backend needs to handle CORS for cross-origin requests
   async headers() {
     return [
       {
@@ -34,7 +48,7 @@ const nextConfig = {
           { key: "Access-Control-Allow-Origin", value: "*" },
           {
             key: "Access-Control-Allow-Methods",
-            value: "GET,DELETE,PATCH,POST,PUT",
+            value: "GET,DELETE,PATCH,POST,PUT,OPTIONS",
           },
           {
             key: "Access-Control-Allow-Headers",

@@ -55,6 +55,56 @@ export interface CategoryFormData {
 
 export interface PerkSEO {
   title: string;
+  description: string;
+  keywords: string[];
+  customMetaTags: any[];
+  ogTitle: string;
+  ogDescription: string;
+}
+
+export interface PriceObject {
+  currency: string;
+  amount: number;
+}
+
+export interface Vendor {
+  name: string;
+  email: string;
+  website: string;
+  description: string;
+}
+
+export interface Redemption {
+  type: string;
+  instructions: string;
+  code: string;
+  expiryDate: string;
+  limitations: string;
+}
+
+export interface Availability {
+  isLimited: boolean;
+  totalQuantity: number;
+  redeemedQuantity: number;
+  startDate: string;
+  endDate: string;
+}
+
+export interface Images {
+  gallery: string[];
+}
+
+export interface Metrics {
+  viewCount: number;
+  clickCount: number;
+  shareCount: number;
+  redemptionCount: number;
+  conversionRate: number;
+}
+
+export interface Approval {
+  status: string;
+  notes: any[];
   metaDescription: string;
   description?: string;
   keywords?: string[];
@@ -66,12 +116,57 @@ export interface PerkSEO {
 
 export interface Perk {
   _id: string;
+  id: string;
   title: string;
-  description?: string;
-  shortDescription?: string;
+  description: string;
+  shortDescription: string;
+  categoryId: string | { name: string };
+  value: string;
+  tags: string[];
+  features: string[];
+  status: string;
+  isVisible: boolean;
+  isFeatured: boolean;
+  isExclusive: boolean;
+  priority: number;
+  clientId: string;
+  createdBy: string;
+  updatedBy: string;
+  createdAt: string;
+  updatedAt: string;
+  
+  discountPercentage: number;
+  remainingQuantity: number;
+  isAvailable: boolean;
+  isExpired: boolean;
+  savingsAmount: number;
+ 
+  images: Images;
+ 
+  
+  metrics: Metrics;
+  approval: Approval;
+  
+  // Legacy fields for backward compatibility
+ 
+  redemptionMethod?: "Affiliate" | "Coupon" | "Form";
+  affiliateUrl?: string;
+  couponCode?: string;
+  validFrom?: string;
+  validTo?: string;
+  categoryName?: string;
+  featured?: boolean;
+  imageUrl?: string;
+  businessName?: string;
+  businessLogo?: string;
+  terms?: string;
+  highlights?: string[];
+  maxRedemptions?: number;
+  currentRedemptions?: number;
+  averageRating?: number;
+  reviewCount?: number;
   longDescription?: string;
   location: string;
-  categoryId?: string;
   category: { name: string };
   vendor: {
     name: string;
@@ -79,7 +174,6 @@ export interface Perk {
     website?: string;
     description?: string;
   };
-  value?: string;
   originalPrice?: { amount: number; currency: string };
   discountedPrice?: { amount: number; currency: string };
   redemption: {
@@ -95,14 +189,7 @@ export interface Perk {
     startDate?: string;
     endDate?: string;
   };
-  tags?: string[];
-  features?: string[];
-  status: Status;
-  isVisible: boolean;
-  isFeatured: boolean;
-  isExclusive: boolean;
-  priority?: number;
-  clientId?: string;
+
   mainImage?: string;
   vendorLogo?: string;
   gallery?: string[];
@@ -206,8 +293,24 @@ export interface LeadFormData {
 export interface BlogPost {
   _id: string;
   title: string;
+  slug: string;
+  content: string;
+  excerpt: string;
   status: Status;
   publishedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  author: {
+    name: string;
+    email: string;
+    avatar?: string;
+  };
+  featuredImage?: string;
+  tags: string[];
+  category: string;
+  readingTime?: number;
+  views?: number;
+  likes?: number;
 }
 
 export interface SiteSettings {

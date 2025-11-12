@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { AuthProvider } from "@/context/AuthContext";
+import Analytics from "@/components/analytics/Analytics";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,6 +23,7 @@ export default function RootLayout({
         {/* This children prop will be your (public) or admin layout */}
         <AuthProvider>
           <ThemeProvider>{children}</ThemeProvider>
+          <Analytics />
         </AuthProvider>
       </body>
     </html>
