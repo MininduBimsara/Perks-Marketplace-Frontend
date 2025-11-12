@@ -462,7 +462,7 @@ export default function PerkDetailPage() {
                 {perk.categoryId && (
                   <span className="flex items-center gap-1 text-gray-700 bg-white px-3 py-1 rounded-lg">
                     <Tag size={16} />
-                    Category ID: {perk.categoryId}
+                    Stock : {perk.remainingQuantity}
                   </span>
                 )}
                 {perk.redemption?.expiryDate && (

@@ -162,7 +162,7 @@ export const analytics = {
 // --- BLOG/JOURNAL ---
 export const blog = {
   getBlogPostsAdmin: () => api.get("/v1/admin/blog"),
-  getBlogPostsPublic: () => api.get("/v1/blog"),
+  getBlogPostsPublic: () => api.get("/v1/blog?page=1&limit=10"),
   createBlogPost: (data: unknown) => api.post("/v1/admin/blog", data),
   getSingleBlogPost: (slug: string) => api.get(`/v1/blog/${slug}`),
 };
