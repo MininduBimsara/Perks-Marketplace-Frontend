@@ -17,7 +17,7 @@ import {
   Users,
   Sparkles
 } from 'lucide-react';
-import { blog } from '@/services/api';
+import { analytics, blog } from '@/services/api';
 import { BlogPost } from '@/lib/types';
 
 export default function JournalPage() {
@@ -45,7 +45,8 @@ export default function JournalPage() {
       try {
         setLoading(true);
         console.log('Fetching blog posts...');
-        
+        // const newResponse=await analytics.getDashboardOverview();
+        // console.log('Analytics response:', newResponse);
         const response = await blog.getBlogPostsPublic();
         console.log('Blog posts response:', response);
         
