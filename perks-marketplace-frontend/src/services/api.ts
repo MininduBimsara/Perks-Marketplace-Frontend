@@ -1,3 +1,19 @@
+// --- DASHBOARD ANALYTICS (NEW) ---
+export const dashboard = {
+  getOverview: (params?: any) => api.get("/v1/dashboard", { params }),
+  getPerks: (params?: any) => api.get("/v1/dashboard/perks", { params }),
+  getCategories: (params?: any) =>
+    api.get("/v1/dashboard/categories", { params }),
+  getLeads: (params?: any) => api.get("/v1/dashboard/leads", { params }),
+  getAnalytics: (params?: any) =>
+    api.get("/v1/dashboard/analytics", { params }),
+  getBlog: (params?: any) => api.get("/v1/dashboard/blog", { params }),
+  getActivity: (params?: any) => api.get("/v1/dashboard/activity", { params }),
+  getPerformance: (params?: any) =>
+    api.get("/v1/dashboard/performance", { params }),
+  getSummary: (params?: any) => api.get("/v1/dashboard/summary", { params }),
+  exportData: (params?: any) => api.get("/v1/dashboard/export", { params }),
+};
 import axios from "axios";
 import { PerkFormData, PerkSEO, SiteSettings } from "@/lib/types";
 
@@ -112,7 +128,8 @@ export const perksAdmin = {
 // --- PERKS (PUBLIC) ---
 export const perksPublic = {
   getActivePerks: () => api.get("/v1/perks"),
-  getPerkById: (perkId: string) => api.get(`/v1/perks/${perkId}?page=1&limit=20`),
+  getPerkById: (perkId: string) =>
+    api.get(`/v1/perks/${perkId}?page=1&limit=20`),
   getFeaturedPerks: () => api.get("/v1/perks/featured"),
   searchPerks: (query: string) => api.get(`/v1/perks/search?q=${query}`),
   getPerkBySlug: (slug: string) => api.get(`/v1/perks/slug/${slug}`),
@@ -163,11 +180,14 @@ export const analytics = {
 export const blog = {
   getBlogPostsAdmin: () => api.get("/v1/admin/blog"),
   getBlogPostsPublic: () => api.get("/v1/blog"),
-  getBlogPostsByCategory: (category: string) => api.get(`/v1/blog/category/${category}`),
+  getBlogPostsByCategory: (category: string) =>
+    api.get(`/v1/blog/category/${category}`),
   getBlogCategories: () => api.get("/v1/blog/categories"),
   createBlogPost: (data: unknown) => api.post("/v1/admin/blog", data),
-  getSingleBlogPost: (slug: string) => api.get(`/v1/blog/slug/${slug}?includeRelations=true`),
-  searchBlogPosts: (query: string) => api.get(`/v1/blog/search?q=${encodeURIComponent(query)}`),
+  getSingleBlogPost: (slug: string) =>
+    api.get(`/v1/blog/slug/${slug}?includeRelations=true`),
+  searchBlogPosts: (query: string) =>
+    api.get(`/v1/blog/search?q=${encodeURIComponent(query)}`),
 };
 
 // --- PARTNER SUBMISSIONS ---
