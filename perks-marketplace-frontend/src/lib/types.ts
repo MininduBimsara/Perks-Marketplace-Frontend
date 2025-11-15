@@ -290,27 +290,54 @@ export interface LeadFormData {
   marketingOptIn?: boolean;
 }
 
+export interface BlogCategory {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  postCount?: number;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface BlogPost {
   _id: string;
+  id: string;
   title: string;
   slug: string;
   content: string;
   excerpt: string;
-  status: Status;
+  status: string;
+  isPublished: boolean;
   publishedAt?: string;
   createdAt: string;
   updatedAt: string;
   author: {
     name: string;
-    email: string;
+    email?: string;
     avatar?: string;
   };
+  seo: {
+    title: string;
+    description: string;
+    keywords: string[];
+    ogTitle: string;
+    ogDescription: string;
+  };
+  analytics: {
+    viewCount: number;
+    shareCount: number;
+    clickCount: number;
+  };
   featuredImage?: string;
+  gallery: string[];
   tags: string[];
-  category: string;
-  readingTime?: number;
-  views?: number;
-  likes?: number;
+  category?: string;
+  readTime: number;
+  isVisible: boolean;
+  createdBy: string;
+  updatedBy: string;
 }
 
 export interface SiteSettings {

@@ -162,9 +162,12 @@ export const analytics = {
 // --- BLOG/JOURNAL ---
 export const blog = {
   getBlogPostsAdmin: () => api.get("/v1/admin/blog"),
-  getBlogPostsPublic: () => api.get("/v1/blog?page=1&limit=10"),
+  getBlogPostsPublic: () => api.get("/v1/blog"),
+  getBlogPostsByCategory: (category: string) => api.get(`/v1/blog/category/${category}`),
+  getBlogCategories: () => api.get("/v1/blog/categories"),
   createBlogPost: (data: unknown) => api.post("/v1/admin/blog", data),
-  getSingleBlogPost: (slug: string) => api.get(`/v1/blog/${slug}`),
+  getSingleBlogPost: (slug: string) => api.get(`/v1/blog/slug/${slug}?includeRelations=true`),
+  searchBlogPosts: (query: string) => api.get(`/v1/blog/search?q=${encodeURIComponent(query)}`),
 };
 
 // --- PARTNER SUBMISSIONS ---

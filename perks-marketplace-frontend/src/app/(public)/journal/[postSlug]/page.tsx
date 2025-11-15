@@ -38,6 +38,19 @@ export default function BlogPostPage() {
   const [likes, setLikes] = useState(0);
   const [copied, setCopied] = useState(false);
   const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([]);
+  const [readingProgress, setReadingProgress] = useState(0);
+
+  // Track reading progress
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = (window.scrollY / totalHeight) * 100;
+      setReadingProgress(Math.min(100, Math.max(0, progress)));
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Fetch blog post
   useEffect(() => {
@@ -51,15 +64,28 @@ export default function BlogPostPage() {
         const response = await blog.getSingleBlogPost(postSlug);
         console.log('Blog post response:', response);
         
-        const postData = response.data?.data || response.data;
+        // Handle the actual API response structure
+        let post = response.data;
         
-        if (!postData) {
+        // If response has nested data structure
+        if (post?.data) {
+          post = post.data;
+        }
+        
+        // If response is an array, find by slug
+        if (Array.isArray(post)) {
+          post = post.find((p: BlogPost) => p.slug === postSlug);
+        }
+        
+        if (!post || !post._id) {
+          console.error('Invalid blog post data:', post);
           setError('Blog post not found');
           return;
         }
 
-        setPost(postData);
-        setLikes(postData.likes || 0);
+        console.log('Extracted blog post:', post);
+        setPost(post);
+        setLikes(post.analytics?.clickCount || 0);
         
         // Fetch related posts
         try {
@@ -67,9 +93,11 @@ export default function BlogPostPage() {
           const allPosts = relatedResponse.data?.data || relatedResponse.data || [];
           const related = allPosts
             .filter((p: BlogPost) => 
-              p._id !== postData._id && 
-              (p.category === postData.category || 
-               p.tags.some(tag => postData.tags.includes(tag)))
+              p._id !== post._id && 
+              p.isPublished && 
+              p.isVisible &&
+              ((p.category && post.category && p.category === post.category) || 
+               p.tags.some(tag => post.tags.includes(tag)))
             )
             .slice(0, 3);
           setRelatedPosts(related);
@@ -83,7 +111,8 @@ export default function BlogPostPage() {
         
         // Set mock data for development
         const mockPost: BlogPost = {
-          _id: '1',
+          _id: '691803c9b44e8166032a3738',
+          id: '691803c9b44e8166032a3738',
           title: 'How to Maximize Your Perks and Savings in 2025',
           slug: postSlug,
           content: `
@@ -152,21 +181,35 @@ export default function BlogPostPage() {
             <p>Remember, the goal isn't to earn the most perks, but to earn the most valuable perks that align with your actual needs and spending patterns. Start with a thorough audit of your current situation, then build a customized perk strategy that works for you.</p>
           `,
           excerpt: 'Discover the latest strategies to get the most out of your perks and maximize your savings this year.',
-          status: 'Published',
+          status: 'published',
+          isPublished: true,
           publishedAt: '2025-01-15T10:00:00Z',
           createdAt: '2025-01-15T09:00:00Z',
           updatedAt: '2025-01-15T10:00:00Z',
           author: {
             name: 'Sarah Chen',
-            email: 'sarah@perkmarket.com',
-            avatar: '/images/authors/sarah.jpg'
+            email: 'sarah@perkmarket.com'
+          },
+          seo: {
+            title: 'How to Maximize Your Perks and Savings in 2025',
+            description: 'Discover the latest strategies to get the most out of your perks and maximize your savings this year.',
+            keywords: ['perks', 'savings', 'guide', 'strategy'],
+            ogTitle: 'How to Maximize Your Perks and Savings in 2025',
+            ogDescription: 'Discover the latest strategies to get the most out of your perks and maximize your savings this year.'
+          },
+          analytics: {
+            viewCount: 1250,
+            shareCount: 45,
+            clickCount: 89
           },
           featuredImage: '/images/blog/perks-guide.jpg',
+          gallery: [],
           tags: ['perks', 'savings', 'guide', 'strategy'],
           category: 'perks-guide',
-          readingTime: 12,
-          views: 1250,
-          likes: 89
+          readTime: 12,
+          isVisible: true,
+          createdBy: '6908648bc8253d51df33d574',
+          updatedBy: '6908648bc8253d51df33d574'
         };
         
         setPost(mockPost);
@@ -179,34 +222,64 @@ export default function BlogPostPage() {
     fetchPost();
   }, [postSlug]);
 
-  const handleLike = () => {
-    setLiked(!liked);
-    setLikes(prev => liked ? prev - 1 : prev + 1);
+  const handleLike = async () => {
+    try {
+      // In a real app, you would call an API endpoint here
+      // await blog.likeBlogPost(post._id);
+      
+      const newLikedState = !liked;
+      setLiked(newLikedState);
+      setLikes(prev => newLikedState ? prev + 1 : prev - 1);
+      
+      // Optional: Show feedback
+      console.log(`Post ${newLikedState ? 'liked' : 'unliked'}`);
+    } catch (error) {
+      console.error('Error updating like:', error);
+      // Revert the state if API call fails
+      setLiked(!liked);
+    }
   };
 
   const handleShare = async (platform?: string) => {
     const url = window.location.href;
     const title = post?.title || '';
+    const description = post?.excerpt || post?.seo?.description || '';
     
     if (platform === 'copy') {
       try {
         await navigator.clipboard.writeText(url);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+        
+        // Optional: Track share analytics
+        console.log('URL copied to clipboard');
       } catch (error) {
         console.error('Failed to copy URL:', error);
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
       }
       return;
     }
 
     const shareUrls = {
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-      twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`,
-      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`
+      twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}&hashtags=${encodeURIComponent(post?.tags?.join(',') || '')}`,
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}&summary=${encodeURIComponent(description)}`
     };
 
     if (platform && shareUrls[platform as keyof typeof shareUrls]) {
-      window.open(shareUrls[platform as keyof typeof shareUrls], '_blank', 'width=600,height=400');
+      const shareUrl = shareUrls[platform as keyof typeof shareUrls];
+      window.open(shareUrl, '_blank', 'width=600,height=400,scrollbars=yes,resizable=yes');
+      
+      // Optional: Track share analytics
+      console.log(`Shared to ${platform}`);
     }
   };
 
@@ -260,6 +333,14 @@ export default function BlogPostPage() {
     <div className="min-h-screen bg-[#f5f1e3]">
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-10">
+        {/* Reading Progress Bar */}
+        <div className="h-1 bg-gray-200">
+          <div 
+            className="h-full bg-yellow-400 transition-all duration-150 ease-out"
+            style={{ width: `${readingProgress}%` }}
+          />
+        </div>
+        
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Link
             href="/journal"
@@ -277,7 +358,7 @@ export default function BlogPostPage() {
           {/* Category and Metadata */}
           <div className="mb-6">
             <span className="inline-block bg-yellow-400 text-[#1a3d35] px-3 py-1 rounded-full text-sm font-semibold mb-4">
-              {formatCategoryName(post.category)}
+              {formatCategoryName(post.category || 'general')}
             </span>
             
             <div className="flex flex-wrap items-center gap-6 text-gray-600 text-sm">
@@ -287,11 +368,11 @@ export default function BlogPostPage() {
               </div>
               <div className="flex items-center gap-1">
                 <Clock size={16} />
-                {post.readingTime} min read
+                {post.readTime} min read
               </div>
               <div className="flex items-center gap-1">
                 <Eye size={16} />
-                {post.views} views
+                {post.analytics.viewCount} views
               </div>
               <div className="flex items-center gap-1">
                 <Heart size={16} />
@@ -390,14 +471,36 @@ export default function BlogPostPage() {
       <section className="py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12">
-            {/* Featured Image Placeholder */}
-            <div className="w-full h-64 md:h-80 bg-gradient-to-br from-[#1a3d35] to-[#2a4d45] rounded-xl mb-8 flex items-center justify-center">
-              <BookOpen size={48} className="text-yellow-400" />
-            </div>
+            {/* Featured Image or Gallery */}
+            {post.gallery && post.gallery.length > 0 ? (
+              <div className="w-full mb-8">
+                <div className="grid gap-4">
+                  {post.gallery.slice(0, 3).map((image, index) => (
+                    <div key={index} className="relative h-64 md:h-80 bg-gray-100 rounded-xl overflow-hidden">
+                      <Image
+                        src={image}
+                        alt={`Gallery image ${index + 1}`}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  ))}
+                  {post.gallery.length > 3 && (
+                    <div className="text-center text-gray-500 text-sm mt-2">
+                      +{post.gallery.length - 3} more images
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="w-full h-64 md:h-80 bg-gradient-to-br from-[#1a3d35] to-[#2a4d45] rounded-xl mb-8 flex items-center justify-center">
+                <BookOpen size={48} className="text-yellow-400" />
+              </div>
+            )}
 
             {/* Article Content */}
             <div 
-              className="prose prose-lg max-w-none prose-headings:text-[#1a3d35] prose-a:text-yellow-600 prose-strong:text-[#1a3d35] prose-blockquote:border-yellow-400 prose-blockquote:bg-yellow-50 prose-blockquote:p-4 prose-blockquote:rounded-lg"
+              className="prose prose-lg max-w-none prose-headings:text-[#1a3d35] prose-a:text-yellow-600 prose-strong:text-[#1a3d35] prose-blockquote:border-yellow-400 prose-blockquote:bg-yellow-50 prose-blockquote:p-4 prose-blockquote:rounded-lg prose-ul:list-disc prose-ol:list-decimal prose-li:marker:text-[#1a3d35]"
               dangerouslySetInnerHTML={{ __html: post.content }}
             />
 
@@ -408,12 +511,69 @@ export default function BlogPostPage() {
                 {post.tags.map((tag, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm"
+                    className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-200 transition cursor-pointer"
                   >
                     <Tag size={14} />
                     {tag}
                   </span>
                 ))}
+              </div>
+            </div>
+
+            {/* Article Meta Information */}
+            <div className="mt-8 pt-8 border-t border-gray-200">
+              <div className="grid md:grid-cols-2 gap-8">
+                {/* Reading Stats */}
+                <div>
+                  <h3 className="text-lg font-semibold text-[#1a3d35] mb-4">Article Stats</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Reading Time</span>
+                      <span className="font-medium">{post.readTime} minutes</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Views</span>
+                      <span className="font-medium">{post.analytics.viewCount.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Shares</span>
+                      <span className="font-medium">{post.analytics.shareCount}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Published</span>
+                      <span className="font-medium">{formatDate(post.publishedAt || post.createdAt)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* SEO Information */}
+                {post.seo && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#1a3d35] mb-4">SEO Info</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <span className="text-gray-600 text-sm block">Meta Title</span>
+                        <span className="font-medium">{post.seo.title}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600 text-sm block">Meta Description</span>
+                        <span className="font-medium text-sm">{post.seo.description}</span>
+                      </div>
+                      {post.seo.keywords && post.seo.keywords.length > 0 && (
+                        <div>
+                          <span className="text-gray-600 text-sm block">Keywords</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {post.seo.keywords.map((keyword, index) => (
+                              <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                                {keyword}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -440,11 +600,11 @@ export default function BlogPostPage() {
                     <div className="p-6">
                       <div className="flex items-center gap-2 mb-3">
                         <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-semibold">
-                          {formatCategoryName(relatedPost.category)}
+                          {formatCategoryName(relatedPost.category || 'general')}
                         </span>
                         <div className="flex items-center gap-1 text-gray-500 text-xs">
                           <Clock size={12} />
-                          {relatedPost.readingTime} min
+                          {relatedPost.readTime} min
                         </div>
                       </div>
                       
@@ -469,11 +629,11 @@ export default function BlogPostPage() {
                         <div className="flex items-center gap-3 text-gray-500">
                           <div className="flex items-center gap-1">
                             <Eye size={12} />
-                            {relatedPost.views}
+                            {relatedPost.analytics.viewCount}
                           </div>
                           <div className="flex items-center gap-1">
                             <Heart size={12} />
-                            {relatedPost.likes}
+                            {relatedPost.analytics.clickCount}
                           </div>
                         </div>
                       </div>

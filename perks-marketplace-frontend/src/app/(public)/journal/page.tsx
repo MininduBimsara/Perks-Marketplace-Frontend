@@ -18,7 +18,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { analytics, blog } from '@/services/api';
-import { BlogPost } from '@/lib/types';
+import { BlogPost, BlogCategory } from '@/lib/types';
 
 export default function JournalPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
@@ -28,8 +28,10 @@ export default function JournalPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>([]);
+  const [categories, setCategories] = useState<string[]>(['all']);
+  const [loadingCategories, setLoadingCategories] = useState(false);
 
-  const categories = [
+  const defaultCategories = [
     'all',
     'perks-guide',
     'deals-savings',
@@ -39,21 +41,146 @@ export default function JournalPage() {
     'technology'
   ];
 
-  // Fetch blog posts
+  // Fetch blog categories
+  const fetchCategories = async () => {
+    try {
+      setLoadingCategories(true);
+      console.log('Fetching blog categories...');
+      const response = await blog.getBlogCategories();
+      console.log('Categories response:', response);
+      
+      const categoryData = response.data?.data || response.data || [];
+      
+      // Extract category names or use the response directly if it's an array of strings
+      let categoryList: string[];
+      if (Array.isArray(categoryData)) {
+        categoryList = categoryData.map((cat: any) => 
+          typeof cat === 'string' ? cat : cat.name || cat.slug || cat.category
+        ).filter(Boolean);
+      } else {
+        categoryList = defaultCategories.slice(1); // Remove 'all' from default
+      }
+      
+      // Always include 'all' as first option
+      const allCategories = ['all', ...categoryList];
+      setCategories(allCategories);
+      
+      console.log('Extracted categories:', allCategories);
+      
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+      // Use default categories on error
+      setCategories(defaultCategories);
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+
+  // Enhanced filtering with API support
+  const handleCategoryFilter = async (category: string) => {
+    setSelectedCategory(category);
+    
+    if (category === 'all') {
+      // Fetch all posts when 'all' is selected
+      await fetchPosts();
+      return;
+    }
+    
+    try {
+      console.log(`Fetching posts for category: ${category}`);
+      const response = await blog.getBlogPostsByCategory(category);
+      const categoryPosts = response.data?.data || response.data || [];
+      
+      // Filter only published posts
+      const publishedCategoryPosts = categoryPosts.filter((post: BlogPost) => 
+        post.isPublished && post.isVisible && post.status === 'published'
+      );
+      
+      // Update posts with category-specific results
+      setPosts(publishedCategoryPosts);
+      
+    } catch (error) {
+      console.error(`Failed to fetch posts for category ${category}:`, error);
+      // Fall back to local filtering - filter current posts by category
+      const filtered = posts.filter(post => 
+        post.category === category ||
+        post.tags.some(tag => tag.toLowerCase() === category.toLowerCase())
+      );
+      setPosts(filtered);
+    }
+  };
+
+  // Enhanced search with API support
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    
+    if (query.trim().length < 2) {
+      // Reset to all posts if query is too short
+      if (selectedCategory === 'all') {
+        await fetchPosts();
+      } else {
+        await handleCategoryFilter(selectedCategory);
+      }
+      return;
+    }
+    
+    try {
+      console.log(`Searching posts for: ${query}`);
+      const response = await blog.searchBlogPosts(query);
+      const searchResults = response.data?.data || response.data || [];
+      
+      // Filter only published posts
+      const publishedSearchResults = searchResults.filter((post: BlogPost) => 
+        post.isPublished && post.isVisible && post.status === 'published'
+      );
+      
+      // Update posts with search results
+      setPosts(publishedSearchResults);
+      
+    } catch (error) {
+      console.error(`Failed to search posts:`, error);
+      // Fall back to local filtering - filter current posts by search query
+      const query = searchQuery.toLowerCase();
+      const filtered = posts.filter(post =>
+        post.title.toLowerCase().includes(query) ||
+        post.excerpt.toLowerCase().includes(query) ||
+        post.content.toLowerCase().includes(query) ||
+        post.tags.some(tag => tag.toLowerCase().includes(query)) ||
+        post.author.name.toLowerCase().includes(query) ||
+        (post.category && post.category.toLowerCase().includes(query))
+      );
+      setPosts(filtered);
+    }
+  };
+
+  // Fetch blog posts and categories
   useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        setLoading(true);
-        console.log('Fetching blog posts...');
-        // const newResponse=await analytics.getDashboardOverview();
-        // console.log('Analytics response:', newResponse);
-        const response = await blog.getBlogPostsPublic();
+    const fetchData = async () => {
+      await Promise.all([fetchPosts(), fetchCategories()]);
+    };
+    fetchData();
+  }, []);
+
+  // Fetch blog posts
+  const fetchPosts = async () => {
+    try {
+      setLoading(true);
+      console.log('Fetching blog posts...');
+      // const newResponse=await analytics.getDashboardOverview();
+      // console.log('Analytics response:', newResponse);
+      const response = await blog.getBlogPostsPublic();
         console.log('Blog posts response:', response);
         
-        const allPosts = response.data?.data || response.data || [];
+        // Handle the actual API response structure
+        const responseData = response.data;
+        const allPosts = responseData?.data || [];
         
-        // Filter only published posts
-        const publishedPosts = allPosts.filter((post: BlogPost) => post.status === 'Published');
+        console.log('Extracted posts:', allPosts);
+        
+        // Filter only published posts (using isPublished boolean)
+        const publishedPosts = allPosts.filter((post: BlogPost) => 
+          post.isPublished && post.isVisible && post.status === 'published'
+        );
         
         setPosts(publishedPosts);
         
@@ -66,73 +193,115 @@ export default function JournalPage() {
         console.error('Failed to fetch blog posts:', error);
         setError('Failed to load blog posts. Please try again later.');
         
-        // Set mock data for development
+        // Set mock data for development matching API structure
         const mockPosts: BlogPost[] = [
           {
-            _id: '1',
+            _id: '691803c9b44e8166032a3738',
+            id: '691803c9b44e8166032a3738',
             title: 'How to Maximize Your Perks and Savings in 2025',
             slug: 'maximize-perks-savings-2025',
-            content: 'Lorem ipsum dolor sit amet...',
+            content: '<p>Discover the latest strategies to get the most out of your perks and maximize your savings this year.</p>',
             excerpt: 'Discover the latest strategies to get the most out of your perks and maximize your savings this year.',
-            status: 'Published',
+            status: 'published',
+            isPublished: true,
             publishedAt: '2025-01-15T10:00:00Z',
             createdAt: '2025-01-15T09:00:00Z',
             updatedAt: '2025-01-15T10:00:00Z',
             author: {
               name: 'Sarah Chen',
-              email: 'sarah@perkmarket.com',
-              avatar: '/images/authors/sarah.jpg'
+              email: 'sarah@perkmarket.com'
             },
-            featuredImage: '/images/blog/perks-guide.jpg',
+            seo: {
+              title: 'How to Maximize Your Perks and Savings in 2025',
+              description: 'Discover the latest strategies to get the most out of your perks and maximize your savings this year.',
+              keywords: ['perks', 'savings', 'guide'],
+              ogTitle: 'How to Maximize Your Perks and Savings in 2025',
+              ogDescription: 'Discover the latest strategies to get the most out of your perks and maximize your savings this year.'
+            },
+            analytics: {
+              viewCount: 1250,
+              shareCount: 45,
+              clickCount: 89
+            },
+            gallery: [],
             tags: ['perks', 'savings', 'guide'],
             category: 'perks-guide',
-            readingTime: 5,
-            views: 1250,
-            likes: 89
+            readTime: 5,
+            isVisible: true,
+            createdBy: '6908648bc8253d51df33d574',
+            updatedBy: '6908648bc8253d51df33d574'
           },
           {
-            _id: '2',
+            _id: '691803c9b44e8166032a3739',
+            id: '691803c9b44e8166032a3739',
             title: 'Top 10 Business Tools with Amazing Perks',
             slug: 'top-business-tools-perks',
-            content: 'Lorem ipsum dolor sit amet...',
+            content: '<p>Explore the best business tools that come with incredible perks for entrepreneurs and teams.</p>',
             excerpt: 'Explore the best business tools that come with incredible perks for entrepreneurs and teams.',
-            status: 'Published',
+            status: 'published',
+            isPublished: true,
             publishedAt: '2025-01-10T14:30:00Z',
             createdAt: '2025-01-10T13:30:00Z',
             updatedAt: '2025-01-10T14:30:00Z',
             author: {
               name: 'Mike Rodriguez',
-              email: 'mike@perkmarket.com',
-              avatar: '/images/authors/mike.jpg'
+              email: 'mike@perkmarket.com'
             },
-            featuredImage: '/images/blog/business-tools.jpg',
+            seo: {
+              title: 'Top 10 Business Tools with Amazing Perks',
+              description: 'Explore the best business tools that come with incredible perks for entrepreneurs and teams.',
+              keywords: ['business', 'tools', 'productivity'],
+              ogTitle: 'Top 10 Business Tools with Amazing Perks',
+              ogDescription: 'Explore the best business tools that come with incredible perks for entrepreneurs and teams.'
+            },
+            analytics: {
+              viewCount: 2100,
+              shareCount: 78,
+              clickCount: 156
+            },
+            gallery: [],
             tags: ['business', 'tools', 'productivity'],
             category: 'business-tips',
-            readingTime: 8,
-            views: 2100,
-            likes: 156
+            readTime: 8,
+            isVisible: true,
+            createdBy: '6908648bc8253d51df33d574',
+            updatedBy: '6908648bc8253d51df33d574'
           },
           {
-            _id: '3',
+            _id: '691803c9b44e8166032a373a',
+            id: '691803c9b44e8166032a373a',
             title: 'The Future of Digital Rewards and Loyalty Programs',
             slug: 'future-digital-rewards',
-            content: 'Lorem ipsum dolor sit amet...',
+            content: '<p>An in-depth look at how digital rewards are evolving and what it means for consumers.</p>',
             excerpt: 'An in-depth look at how digital rewards are evolving and what it means for consumers.',
-            status: 'Published',
+            status: 'published',
+            isPublished: true,
             publishedAt: '2025-01-05T16:00:00Z',
             createdAt: '2025-01-05T15:00:00Z',
             updatedAt: '2025-01-05T16:00:00Z',
             author: {
               name: 'Emma Thompson',
-              email: 'emma@perkmarket.com',
-              avatar: '/images/authors/emma.jpg'
+              email: 'emma@perkmarket.com'
             },
-            featuredImage: '/images/blog/digital-rewards.jpg',
+            seo: {
+              title: 'The Future of Digital Rewards and Loyalty Programs',
+              description: 'An in-depth look at how digital rewards are evolving and what it means for consumers.',
+              keywords: ['technology', 'rewards', 'future'],
+              ogTitle: 'The Future of Digital Rewards and Loyalty Programs',
+              ogDescription: 'An in-depth look at how digital rewards are evolving and what it means for consumers.'
+            },
+            analytics: {
+              viewCount: 980,
+              shareCount: 32,
+              clickCount: 74
+            },
+            gallery: [],
             tags: ['technology', 'rewards', 'future'],
             category: 'technology',
-            readingTime: 6,
-            views: 980,
-            likes: 74
+            readTime: 6,
+            isVisible: true,
+            createdBy: '6908648bc8253d51df33d574',
+            updatedBy: '6908648bc8253d51df33d574'
           }
         ];
         
@@ -143,16 +312,13 @@ export default function JournalPage() {
       }
     };
 
-    fetchPosts();
-  }, []);
-
   // Filter posts based on search and category
   useEffect(() => {
     let filtered = posts;
 
     // Filter by category
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter(post => post.category === selectedCategory);
+      filtered = filtered.filter(post => (post.category || 'general') === selectedCategory);
     }
 
     // Filter by search query
@@ -257,7 +423,7 @@ export default function JournalPage() {
                   <div className="p-8 flex flex-col justify-center">
                     <div className="flex items-center gap-4 mb-4">
                       <span className="bg-yellow-400 text-[#1a3d35] px-3 py-1 rounded-full text-sm font-semibold">
-                        {formatCategoryName(featuredPost.category)}
+                        {formatCategoryName(featuredPost.category || 'general')}
                       </span>
                       <div className="flex items-center gap-4 text-gray-500 text-sm">
                         <div className="flex items-center gap-1">
@@ -266,7 +432,7 @@ export default function JournalPage() {
                         </div>
                         <div className="flex items-center gap-1">
                           <Clock size={16} />
-                          {featuredPost.readingTime} min read
+                          {featuredPost.readTime} min read
                         </div>
                       </div>
                     </div>
@@ -291,11 +457,11 @@ export default function JournalPage() {
                           <div className="flex items-center gap-3 text-gray-500 text-sm">
                             <div className="flex items-center gap-1">
                               <Eye size={14} />
-                              {featuredPost.views}
+                              {featuredPost.analytics.viewCount}
                             </div>
                             <div className="flex items-center gap-1">
                               <Heart size={14} />
-                              {featuredPost.likes}
+                              {featuredPost.analytics.clickCount}
                             </div>
                           </div>
                         </div>
@@ -319,14 +485,14 @@ export default function JournalPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row gap-6 items-center">
             {/* Search */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <div className="relative max-w-md">
+              <Search size={20} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search articles..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                onChange={(e) => handleSearch(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-white"
               />
             </div>
             
@@ -335,15 +501,19 @@ export default function JournalPage() {
               <Filter size={20} className="text-gray-500" />
               <select
                 value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-white"
+                onChange={(e) => handleCategoryFilter(e.target.value)}
+                disabled={loadingCategories}
+                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 {categories.map(category => (
                   <option key={category} value={category}>
-                    {formatCategoryName(category)}
+                    {loadingCategories && category !== 'all' ? 'Loading...' : formatCategoryName(category)}
                   </option>
                 ))}
               </select>
+              {loadingCategories && (
+                <div className="animate-spin h-4 w-4 border-2 border-yellow-500 border-t-transparent rounded-full"></div>
+              )}
             </div>
           </div>
         </div>
@@ -378,11 +548,11 @@ export default function JournalPage() {
                   <div className="p-6">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-semibold">
-                        {formatCategoryName(post.category)}
+                        {formatCategoryName(post.category || 'general')}
                       </span>
                       <div className="flex items-center gap-1 text-gray-500 text-xs">
                         <Clock size={12} />
-                        {post.readingTime} min
+                        {post.readTime} min
                       </div>
                     </div>
                     
@@ -407,11 +577,11 @@ export default function JournalPage() {
                       <div className="flex items-center gap-3 text-gray-500">
                         <div className="flex items-center gap-1">
                           <Eye size={12} />
-                          {post.views}
+                          {post.analytics.viewCount}
                         </div>
                         <div className="flex items-center gap-1">
                           <Heart size={12} />
-                          {post.likes}
+                          {post.analytics.clickCount}
                         </div>
                       </div>
                     </div>
