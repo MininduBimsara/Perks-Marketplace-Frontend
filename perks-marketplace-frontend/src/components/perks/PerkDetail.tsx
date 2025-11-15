@@ -3,6 +3,8 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, ExternalLink, Star, Tag, Clock, CheckCircle, AlertCircle, Copy, Heart, Share2, Globe, Mail, Calendar } from "lucide-react";
 import { perksPublic } from '@/services/api';
+import { seoService } from '@/services/seo';
+import { MetaTags } from '@/components/seo/MetaTags';
 // Types
 interface PriceObject {
   currency: string;
@@ -147,6 +149,7 @@ export default function PerkDetailPage() {
   const [showRedemptionModal, setShowRedemptionModal] = useState(false);
   const [couponCopied, setCouponCopied] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const [seoData, setSeoData] = useState<any>(null);
   
   // Use ref to prevent duplicate API calls
   const fetchInProgress = useRef(false);
@@ -225,6 +228,18 @@ export default function PerkDetailPage() {
         // Only update state if component is still mounted
         if (isMounted) {
           setPerk(perkData);
+          // fetch SEO data for this perk (client-side only)
+          try {
+            const seoRes = await seoService.getPageSeo(
+              "perk",
+              perkData.slug || perkData._id,
+              true
+            );
+            const seoPayload = seoRes?.data?.data || seoRes?.data;
+            if (isMounted) setSeoData(seoPayload);
+          } catch (err) {
+            console.warn("Failed to fetch page SEO:", err);
+          }
           lastFetchedPerkId.current = perkId; // Mark this perk as successfully fetched
           console.log('Perk state updated successfully');
         }
@@ -322,7 +337,9 @@ export default function PerkDetailPage() {
   if (error || !perk) {
     console.log('Rendering error state:', { error, perk: !!perk, perkKeys: perk ? Object.keys(perk) : [] });
     return (
-      <div className="min-h-screen bg-[#f5f1e3]">
+      <>
+        <MetaTags seoData={seoData} />
+        <div className="min-h-screen bg-[#f5f1e3]">
         <header className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <button onClick={handleBack} className="flex items-center text-[#1a3d35] hover:text-[#2a4d45] transition">
@@ -755,6 +772,7 @@ export default function PerkDetailPage() {
         </div>
       </footer>
     </div>
+      </>
     );
   } catch (renderError) {
     console.error('Error rendering perk details:', renderError);

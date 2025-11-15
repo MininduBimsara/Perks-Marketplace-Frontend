@@ -33,10 +33,83 @@ export default function SeoSettingsPage() {
       const res = await seoService.getSeoSettings();
       setSettings(res.data.data || res.data);
     } catch (error: any) {
-      showMessage(
-        "error",
-        error?.response?.data?.message || "Failed to load SEO settings"
-      );
+      const status = error?.response?.status;
+      const code =
+        error?.response?.data?.error?.code || error?.response?.data?.code;
+      // Gracefully handle the case where no active SEO settings exist yet
+      if (status === 404 && (code === "SEO_SETTINGS_NOT_FOUND" || true)) {
+        const defaultSettings = {
+          siteName: "",
+          siteDescription: "",
+          siteUrl: "",
+          defaultMetaTitle: "",
+          defaultMetaDescription: "",
+          defaultMetaKeywords: [],
+          twitterSite: "",
+          twitterCreator: "",
+          organization: {
+            name: "",
+            description: "",
+            url: "",
+            logo: { url: "", publicId: "" },
+            contactPoint: {
+              telephone: "",
+              contactType: "customer service",
+              email: "",
+            },
+            address: {
+              streetAddress: "",
+              addressLocality: "",
+              addressRegion: "",
+              postalCode: "",
+              addressCountry: "",
+            },
+            socialMedia: {},
+          },
+          sitemapSettings: {
+            enabled: true,
+            includePerks: true,
+            includeCategories: true,
+            includeBlogPosts: false,
+            changeFreq: "daily",
+            priority: 0.8,
+            lastGenerated: null,
+          },
+          robotsSettings: {
+            enabled: true,
+            allowAll: true,
+            customRules: [],
+            crawlDelay: 1,
+            sitemapUrls: [],
+          },
+          schemaSettings: {
+            enableOrganization: true,
+            enableWebsite: true,
+            enableBreadcrumbs: true,
+            enableProducts: true,
+            enableOffers: true,
+            enableSearchBox: true,
+          },
+          additionalSettings: {
+            enableCanonicalUrls: true,
+            enableHreflang: false,
+            defaultLanguage: "en",
+            enableJsonLd: true,
+            customMetaTags: [],
+          },
+          isActive: true,
+        } as any;
+        setSettings(defaultSettings);
+        showMessage(
+          "error",
+          "No active SEO settings found. Fill the form and click Save to initialize."
+        );
+      } else {
+        showMessage(
+          "error",
+          error?.response?.data?.message || "Failed to load SEO settings"
+        );
+      }
     } finally {
       setLoading(false);
     }
