@@ -11,9 +11,39 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Redirect to login if not authenticated
+  // Debug: Log when admin layout is triggered
+  console.log(
+    "[ADMIN LAYOUT] pathname:",
+    pathname,
+    "isAuthenticated:",
+    isAuthenticated,
+    "isLoading:",
+    isLoading
+  );
+
+  // Redirect to login if not authenticated, but ONLY for admin routes
   useEffect(() => {
-    if (!isLoading && !isAuthenticated && pathname !== "/login") {
+    if (isLoading) return;
+
+    const adminProtectedPrefixes = [
+      "/dashboard",
+      "/users",
+      "/leads",
+      "/categories",
+      "/reports",
+      "/seo",
+      "/settings",
+      "/perks-admin",
+    ];
+
+    const isAdminRoute = adminProtectedPrefixes.some((p) =>
+      pathname?.startsWith(p)
+    );
+    if (isAdminRoute && !isAuthenticated) {
+      console.log(
+        "[ADMIN LAYOUT] Redirecting to /login - unauthenticated admin route:",
+        pathname
+      );
       router.push("/login");
     }
   }, [isAuthenticated, isLoading, pathname, router]);

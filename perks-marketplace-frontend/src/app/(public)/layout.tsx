@@ -7,6 +7,9 @@ export default function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Debug: This layout should render for all public routes without auth checks
+  console.log("[PUBLIC LAYOUT] Rendering - NO AUTH REQUIRED");
+
   return (
     <>
       <PerksHeader />
