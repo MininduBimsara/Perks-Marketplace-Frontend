@@ -1,35 +1,10 @@
-// src/app/(public)/contact/page.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Mail, Phone, MapPin, Send, CheckCircle } from "lucide-react";
-import { useTheme } from "@/context/ThemeContext";
+import React, { useState } from "react";
+import { Mail, Phone, MapPin, Send, CheckCircle, Users, MessageSquare, Clock, ArrowRight } from "lucide-react";
 import { siteSettings } from "@/services/api";
 
-// Contact page data structure
-interface ContactPageData {
-  hero: {
-    title: string;
-    subtitle: string;
-  };
-  contactInfo: {
-    email: string;
-    phone: string;
-    address: string;
-  };
-  form: {
-    title: string;
-    subtitle: string;
-    successMessage: string;
-  };
-  faqs: Array<{
-    question: string;
-    answer: string;
-  }>;
-}
-
 export default function ContactPage() {
-  const { theme, themeName } = useTheme();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -39,58 +14,6 @@ export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Fetch page content from CMS
-  const [pageData, setPageData] = useState<ContactPageData>({
-    hero: {
-      title: "Get in Touch",
-      subtitle:
-        "Have questions about perks? Want to partner with us? We'd love to hear from you.",
-    },
-    contactInfo: {
-      email: "hello@perkpal.com",
-      phone: "+60 12-345 6789",
-      address: "Kuala Lumpur, Malaysia",
-    },
-    form: {
-      title: "Send us a Message",
-      subtitle: "Fill out the form below and we'll get back to you shortly.",
-      successMessage:
-        "Thank you for reaching out! We'll get back to you within 24 hours.",
-    },
-    faqs: [
-      {
-        question: "How do I redeem a perk?",
-        answer:
-          "Simply click on the perk you're interested in and follow the redemption instructions provided.",
-      },
-      {
-        question: "Are the perks really free?",
-        answer:
-          "Most perks offer significant discounts or free trials. Some may require you to meet certain criteria.",
-      },
-      {
-        question: "Can I submit my company's perk?",
-        answer:
-          "Yes! Use our Partner With Us form to submit your perk offer for review.",
-      },
-    ],
-  });
-
-  useEffect(() => {
-    // Fetch contact page data from CMS
-    const fetchPageData = async () => {
-      try {
-        const response = await siteSettings.getStaticPage("contact");
-        if (response.data) {
-          setPageData(response.data);
-        }
-      } catch (error) {
-        console.error("Failed to load contact page data:", error);
-      }
-    };
-    fetchPageData();
-  }, []);
 
   // Handle form input changes
   const handleChange = (
@@ -109,13 +32,7 @@ export default function ContactPage() {
     setError(null);
 
     try {
-      // Submit contact form via API
-      await fetch("/api/v1/contact/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
+      await siteSettings.submitContactForm(formData);
       setIsSubmitted(true);
       setFormData({ name: "", email: "", subject: "", message: "" });
     } catch {
@@ -125,360 +42,326 @@ export default function ContactPage() {
     }
   };
 
+  const contactMethods = [
+    {
+      icon: Mail,
+      title: "Email Us",
+      subtitle: "Get in touch anytime",
+      value: "hello@perkmarket.com",
+      action: "mailto:hello@perkmarket.com",
+      color: "bg-yellow-400"
+    },
+    {
+      icon: Phone,
+      title: "Call Us",
+      subtitle: "Mon-Fri 9AM-6PM",
+      value: "+60 3-2345 6789",
+      action: "tel:+60323456789",
+      color: "bg-[#1a3d35]"
+    },
+    {
+      icon: MapPin,
+      title: "Visit Us",
+      subtitle: "Come say hello",
+      value: "Kuala Lumpur, Malaysia",
+      action: "#",
+      color: "bg-[#6b8d7f]"
+    }
+  ];
+
+  const reasons = [
+    {
+      icon: Users,
+      title: "Partnership Opportunities",
+      description: "Join our marketplace and offer exclusive perks to our community"
+    },
+    {
+      icon: MessageSquare,
+      title: "General Support",
+      description: "Questions about perks, accounts, or how our platform works"
+    },
+    {
+      icon: Clock,
+      title: "Business Inquiries",
+      description: "Custom solutions and enterprise partnerships"
+    }
+  ];
+
   return (
-    <>
-      <style>{`
-        .contact-card {
-          background-color: ${theme.colors.card};
-          transition: all 0.3s ease;
-        }
-
-        .contact-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 10px 25px ${
-            themeName === "dark"
-              ? "rgba(255, 255, 255, 0.1)"
-              : "rgba(0, 0, 0, 0.1)"
-          };
-        }
-
-        .input-field {
-          background-color: ${theme.colors.background};
-          color: ${theme.colors.foreground};
-          border: 2px solid ${
-            themeName === "dark" ? "rgba(255, 255, 255, 0.1)" : "#e5e7eb"
-          };
-        }
-
-        .input-field:focus {
-          outline: none;
-          border-color: ${theme.colors.primary};
-        }
-
-        .gradient-text {
-          background: linear-gradient(135deg, ${theme.colors.primary}, ${
-        theme.colors.secondary
-      });
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-
-        .faq-item {
-          border-bottom: 1px solid ${
-            themeName === "dark" ? "rgba(255, 255, 255, 0.1)" : "#e5e7eb"
-          };
-        }
-      `}</style>
-
-      <div
-        style={{
-          backgroundColor: theme.colors.background,
-          minHeight: "100vh",
-        }}
-      >
-        {/* Hero Section */}
-        <section className="pt-24 pb-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-3xl mx-auto">
-              <h1
-                className="text-5xl md:text-6xl font-bold mb-6"
-                style={{ color: theme.colors.foreground }}
-              >
-                {pageData.hero.title}
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section className="bg-[#f5f1e3] py-16 md:py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            {/* Hero Content */}
+            <div className="space-y-8 max-w-4xl mx-auto">
+              <h1 className="text-5xl md:text-6xl font-bold text-[#1a3d35] leading-tight">
+                Get in Touch
               </h1>
-              <p
-                className="text-xl"
-                style={{ color: theme.colors.foreground, opacity: 0.7 }}
-              >
-                {pageData.hero.subtitle}
+              <p className="text-lg text-gray-700 max-w-2xl mx-auto">
+                Have questions about perks? Want to partner with us? We'd love to hear from you and help supercharge your business.
               </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Contact Info Cards */}
-        <section className="py-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid md:grid-cols-3 gap-8">
-              {/* Email Card */}
-              <div className="contact-card rounded-2xl p-8 text-center">
-                <div
-                  className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
-                  style={{ backgroundColor: `${theme.colors.primary}1A` }}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <a 
+                  href="#contact-form"
+                  className="bg-yellow-400 text-[#1a3d35] px-8 py-4 rounded-lg font-semibold hover:bg-yellow-500 transition text-lg text-center"
                 >
-                  <Mail
-                    className="h-8 w-8"
-                    style={{ color: theme.colors.primary }}
-                  />
-                </div>
-                <h3
-                  className="text-lg font-semibold mb-2"
-                  style={{ color: theme.colors.foreground }}
+                  Send Message
+                </a>
+                <a 
+                  href="mailto:hello@perkmarket.com"
+                  className="bg-[#1a3d35] text-white px-8 py-4 rounded-lg font-semibold hover:bg-[#2a4d45] transition text-lg text-center"
                 >
-                  Email Us
-                </h3>
-                <p
-                  className="text-sm mb-2"
-                  style={{ color: theme.colors.foreground, opacity: 0.7 }}
-                >
-                  We&apos;ll respond within 24 hours
-                </p>
-                <a
-                  href={`mailto:${pageData.contactInfo.email}`}
-                  className="font-medium"
-                  style={{ color: theme.colors.primary }}
-                >
-                  {pageData.contactInfo.email}
+                  Email Direct
                 </a>
               </div>
-
-              {/* Phone Card */}
-              <div className="contact-card rounded-2xl p-8 text-center">
-                <div
-                  className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
-                  style={{ backgroundColor: `${theme.colors.secondary}1A` }}
-                >
-                  <Phone
-                    className="h-8 w-8"
-                    style={{ color: theme.colors.secondary }}
-                  />
-                </div>
-                <h3
-                  className="text-lg font-semibold mb-2"
-                  style={{ color: theme.colors.foreground }}
-                >
-                  Call Us
-                </h3>
-                <p
-                  className="text-sm mb-2"
-                  style={{ color: theme.colors.foreground, opacity: 0.7 }}
-                >
-                  Mon-Fri, 9am-6pm MYT
-                </p>
-                <a
-                  href={`tel:${pageData.contactInfo.phone.replace(/\s/g, "")}`}
-                  className="font-medium"
-                  style={{ color: theme.colors.secondary }}
-                >
-                  {pageData.contactInfo.phone}
-                </a>
-              </div>
-
-              {/* Location Card */}
-              <div className="contact-card rounded-2xl p-8 text-center">
-                <div
-                  className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
-                  style={{ backgroundColor: `${theme.colors.accent}1A` }}
-                >
-                  <MapPin
-                    className="h-8 w-8"
-                    style={{ color: theme.colors.accent }}
-                  />
-                </div>
-                <h3
-                  className="text-lg font-semibold mb-2"
-                  style={{ color: theme.colors.foreground }}
-                >
-                  Visit Us
-                </h3>
-                <p
-                  className="text-sm mb-2"
-                  style={{ color: theme.colors.foreground, opacity: 0.7 }}
-                >
-                  Our headquarters
-                </p>
-                <p
-                  className="font-medium"
-                  style={{ color: theme.colors.accent }}
-                >
-                  {pageData.contactInfo.address}
-                </p>
-              </div>
             </div>
-          </div>
-        </section>
 
-        {/* Contact Form Section */}
-        <section className="py-16">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="contact-card rounded-2xl p-8 md:p-12">
-              <div className="text-center mb-8">
-                <h2
-                  className="text-3xl md:text-4xl font-bold mb-4"
-                  style={{ color: theme.colors.foreground }}
-                >
-                  {pageData.form.title}
-                </h2>
-                <p style={{ color: theme.colors.foreground, opacity: 0.7 }}>
-                  {pageData.form.subtitle}
+            {/* Contact Visual */}
+            
+          </div>
+        </div>
+      </section>
+
+      {/* Contact Methods Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-[#1a3d35] mb-4">
+              How to Reach Us
+            </h2>
+            <p className="text-gray-600 text-lg">
+              Choose the method that works best for you
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {contactMethods.map((method, idx) => (
+              <a 
+                key={idx} 
+                href={method.action}
+                className="group bg-white rounded-2xl border border-gray-100 p-8 text-center hover:shadow-xl transition-all duration-300 hover:-translate-y-2"
+              >
+                <div className={`w-20 h-20 ${method.color} rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition`}>
+                  <method.icon className="text-white" size={36} />
+                </div>
+                <h3 className="text-xl font-bold text-[#1a3d35] mb-2">
+                  {method.title}
+                </h3>
+                <p className="text-gray-600 mb-3">
+                  {method.subtitle}
+                </p>
+                <p className="text-[#1a3d35] font-semibold">
+                  {method.value}
+                </p>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Contact Us Section */}
+      <section className="py-20 bg-[#f5f1e3]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-[#1a3d35] mb-4">
+              Why Get in Touch?
+            </h2>
+            <p className="text-gray-600 text-lg">
+              We're here to help with all your perk-related needs
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {reasons.map((reason, idx) => (
+              <div key={idx} className="bg-white rounded-2xl p-8 text-center hover:shadow-lg transition">
+                <div className="w-16 h-16 bg-yellow-400 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <reason.icon className="text-[#1a3d35]" size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-[#1a3d35] mb-4">
+                  {reason.title}
+                </h3>
+                <p className="text-gray-600">
+                  {reason.description}
                 </p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-              {isSubmitted ? (
-                // Success Message
-                <div
-                  className="text-center py-12"
-                  style={{ color: theme.colors.foreground }}
-                >
-                  <CheckCircle
-                    className="h-16 w-16 mx-auto mb-4"
-                    style={{ color: "#22c55e" }}
-                  />
-                  <h3 className="text-2xl font-bold mb-2">Message Sent!</h3>
-                  <p style={{ opacity: 0.7 }}>{pageData.form.successMessage}</p>
-                  <button
-                    onClick={() => setIsSubmitted(false)}
-                    className="mt-6 px-6 py-3 rounded-lg font-medium text-white"
-                    style={{ backgroundColor: theme.colors.primary }}
-                  >
-                    Send Another Message
-                  </button>
-                </div>
-              ) : (
-                // Contact Form
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {/* Name Input */}
-                    <div>
-                      <label
-                        className="block text-sm font-medium mb-2"
-                        style={{ color: theme.colors.foreground }}
-                      >
-                        Name *
-                      </label>
-                      <input
-                        type="text"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
-                        className="input-field w-full px-4 py-3 rounded-lg"
-                        placeholder="Your name"
-                      />
-                    </div>
+      {/* Contact Form Section */}
+      <section id="contact-form" className="py-20 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-[#1a3d35] mb-4">
+              Send us a Message
+            </h2>
+            <p className="text-gray-600 text-lg">
+              Fill out the form below and we'll get back to you within 24 hours
+            </p>
+          </div>
 
-                    {/* Email Input */}
-                    <div>
-                      <label
-                        className="block text-sm font-medium mb-2"
-                        style={{ color: theme.colors.foreground }}
-                      >
-                        Email *
-                      </label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        required
-                        className="input-field w-full px-4 py-3 rounded-lg"
-                        placeholder="you@company.com"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Subject Input */}
+          {isSubmitted ? (
+            <div className="max-w-md mx-auto text-center">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="text-green-600" size={40} />
+              </div>
+              <h3 className="text-2xl font-bold text-[#1a3d35] mb-4">
+                Message Sent Successfully!
+              </h3>
+              <p className="text-gray-600 mb-8">
+                Thank you for reaching out. We'll get back to you within 24 hours.
+              </p>
+              <button
+                onClick={() => setIsSubmitted(false)}
+                className="bg-yellow-400 text-[#1a3d35] px-8 py-3 rounded-lg font-semibold hover:bg-yellow-500 transition"
+              >
+                Send Another Message
+              </button>
+            </div>
+          ) : (
+            <div className="bg-[#f5f1e3] rounded-3xl p-8 md:p-12">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: theme.colors.foreground }}
-                    >
-                      Subject *
+                    <label htmlFor="name" className="block text-sm font-semibold text-[#1a3d35] mb-2">
+                      Full Name *
                     </label>
                     <input
                       type="text"
-                      name="subject"
-                      value={formData.subject}
+                      id="name"
+                      name="name"
+                      value={formData.name}
                       onChange={handleChange}
                       required
-                      className="input-field w-full px-4 py-3 rounded-lg"
-                      placeholder="How can we help?"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent bg-white"
+                      placeholder="Enter your full name"
                     />
                   </div>
-
-                  {/* Message Textarea */}
                   <div>
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: theme.colors.foreground }}
-                    >
-                      Message *
+                    <label htmlFor="email" className="block text-sm font-semibold text-[#1a3d35] mb-2">
+                      Email Address *
                     </label>
-                    <textarea
-                      name="message"
-                      value={formData.message}
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
                       onChange={handleChange}
                       required
-                      rows={6}
-                      className="input-field w-full px-4 py-3 rounded-lg resize-none"
-                      placeholder="Tell us more about your inquiry..."
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent bg-white"
+                      placeholder="Enter your email address"
                     />
                   </div>
+                </div>
 
-                  {/* Error Message */}
-                  {error && (
-                    <div className="p-4 rounded-lg bg-red-50 text-red-600 text-sm">
-                      {error}
-                    </div>
-                  )}
+                <div>
+                  <label htmlFor="subject" className="block text-sm font-semibold text-[#1a3d35] mb-2">
+                    Subject *
+                  </label>
+                  <input
+                    type="text"
+                    id="subject"
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent bg-white"
+                    placeholder="What's this about?"
+                  />
+                </div>
 
-                  {/* Submit Button */}
+                <div>
+                  <label htmlFor="message" className="block text-sm font-semibold text-[#1a3d35] mb-2">
+                    Message *
+                  </label>
+                  <textarea
+                    id="message"
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
+                    required
+                    rows={6}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent bg-white resize-none"
+                    placeholder="Tell us more about your inquiry..."
+                  />
+                </div>
+
+                {error && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <p className="text-red-800 text-sm">{error}</p>
+                  </div>
+                )}
+
+                <div className="text-center">
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-4 rounded-lg font-semibold text-white text-lg flex items-center justify-center space-x-2 transition-all disabled:opacity-50"
-                    style={{ backgroundColor: theme.colors.primary }}
+                    className="bg-yellow-400 text-[#1a3d35] px-12 py-4 rounded-lg font-bold hover:bg-yellow-500 transition disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-3 text-lg"
                   >
                     {isSubmitting ? (
-                      <span>Sending...</span>
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#1a3d35]"></div>
+                        Sending...
+                      </>
                     ) : (
                       <>
-                        <span>Send Message</span>
-                        <Send className="h-5 w-5" />
+                        Send Message
+                        <ArrowRight size={20} />
                       </>
                     )}
                   </button>
-                </form>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* FAQ Section */}
-        <section className="py-16">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2
-                className="text-3xl md:text-4xl font-bold mb-4"
-                style={{ color: theme.colors.foreground }}
-              >
-                Frequently Asked{" "}
-                <span className="gradient-text">Questions</span>
-              </h2>
-              <p style={{ color: theme.colors.foreground, opacity: 0.7 }}>
-                Quick answers to common questions
-              </p>
-            </div>
-
-            <div className="space-y-6">
-              {pageData.faqs.map((faq, index) => (
-                <div key={index} className="faq-item pb-6">
-                  <h3
-                    className="text-lg font-semibold mb-2"
-                    style={{ color: theme.colors.foreground }}
-                  >
-                    {faq.question}
-                  </h3>
-                  <p style={{ color: theme.colors.foreground, opacity: 0.7 }}>
-                    {faq.answer}
-                  </p>
                 </div>
-              ))}
+              </form>
             </div>
+          )}
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-20 bg-[#f5f1e3]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-[#1a3d35] mb-4">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-gray-600 text-lg">
+              Quick answers to common questions
+            </p>
           </div>
-        </section>
-      </div>
-    </>
+
+          <div className="space-y-6">
+            {[
+              {
+                question: "How do I redeem a perk?",
+                answer: "Simply click on the perk you're interested in and follow the redemption instructions provided. Each perk has specific steps outlined on its detail page."
+              },
+              {
+                question: "Are the perks really free?",
+                answer: "Most perks offer significant discounts, free trials, or exclusive access. Some may require you to meet certain criteria like being a startup or having a specific business size."
+              },
+              {
+                question: "Can I submit my company's perk?",
+                answer: "Absolutely! We'd love to feature your perk. Use the contact form above or email us directly to start the partnership process."
+              },
+              {
+                question: "How quickly do you respond to inquiries?",
+                answer: "We aim to respond to all inquiries within 24 hours during business days. Partnership inquiries may take 2-3 business days for a detailed response."
+              }
+            ].map((faq, idx) => (
+              <div key={idx} className="bg-white rounded-2xl p-8 border border-gray-100">
+                <h3 className="text-xl font-bold text-[#1a3d35] mb-4">
+                  {faq.question}
+                </h3>
+                <p className="text-gray-600 leading-relaxed">
+                  {faq.answer}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
