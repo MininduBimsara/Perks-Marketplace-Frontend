@@ -161,7 +161,7 @@ export default function JournalPage() {
     }
   };
 
-  // Fetch public statistics
+  
   const fetchPublicStats = async () => {
     try {
       setLoadingStats(true);
