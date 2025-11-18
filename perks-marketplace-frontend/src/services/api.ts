@@ -86,6 +86,7 @@ export const categoriesAdmin = {
     api.get(`/v1/categories/${parentId}/subcategories`),
   updateCounters: (id: string) =>
     api.post(`/v1/categories/${id}/update-counters`),
+  
 };
 
 // --- CATEGORIES (PUBLIC) ---
@@ -167,6 +168,7 @@ export const leadManagement = {
   getLeadsByStatus: (status: string) => api.get(`/v1/leads/status/${status}`),
   convertLead: (id: string) => api.post(`/v1/leads/${id}/convert`),
   bulkUpdateLeads: (data: unknown) => api.post("/v1/leads/bulk-update", data),
+  getStaticDetails:() => api.get(`/v1/dashboard/public-stats`),
 };
 
 // --- ANALYTICS ---

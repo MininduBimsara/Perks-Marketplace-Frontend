@@ -17,7 +17,7 @@ import {
   Users,
   Sparkles
 } from 'lucide-react';
-import { analytics, blog } from '@/services/api';
+import { analytics, blog, leadManagement } from '@/services/api';
 import { BlogPost, BlogCategory } from '@/lib/types';
 
 export default function JournalPage() {
@@ -30,6 +30,14 @@ export default function JournalPage() {
   const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>([]);
   const [categories, setCategories] = useState<string[]>(['all']);
   const [loadingCategories, setLoadingCategories] = useState(false);
+  
+  // Statistics state
+  const [stats, setStats] = useState({
+    totalActivePerks: 0,
+    totalBlogPosts: 0,
+    totalUsers: 0
+  });
+  const [loadingStats, setLoadingStats] = useState(false);
 
   const defaultCategories = [
     'all',
@@ -153,10 +161,48 @@ export default function JournalPage() {
     }
   };
 
+  // Fetch public statistics
+  const fetchPublicStats = async () => {
+    try {
+      setLoadingStats(true);
+      console.log('Fetching public statistics...');
+      const response = await leadManagement.getStaticDetails();
+      console.log('Statistics response:', response.data.data);
+      
+      if  (response.data) {
+        const { perkStats, blogStats, leadStats } = response.data?.data||response.data;
+        console.log('Statistics data breakdown:', {
+          perkStats,
+          blogStats,
+          leadStats
+        });
+        
+        setStats({
+          totalActivePerks: perkStats?.totalActivePerks || 0,
+          totalBlogPosts: blogStats?.publishedPosts || blogStats?.totalPosts || 0,
+          totalUsers: leadStats?.totalLeads || 0
+        });
+        
+        console.log('Final statistics set:', {
+          totalActivePerks: perkStats?.totalActivePerks || 0,
+          totalBlogPosts: blogStats?.publishedPosts || blogStats?.totalPosts || 0,
+          totalUsers: leadStats?.totalLeads || 0
+        });
+      } else {
+        console.warn('Unexpected statistics response format:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching public statistics:', error);
+      // Keep default values on error
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
   // Fetch blog posts and categories
   useEffect(() => {
     const fetchData = async () => {
-      await Promise.all([fetchPosts(), fetchCategories()]);
+      await Promise.all([fetchPosts(), fetchCategories(), fetchPublicStats()]);
     };
     fetchData();
   }, []);
@@ -176,11 +222,35 @@ export default function JournalPage() {
         const allPosts = responseData?.data || [];
         
         console.log('Extracted posts:', allPosts);
+        console.log('Number of posts received:', allPosts.length);
         
-        // Filter only published posts (using isPublished boolean)
-        const publishedPosts = allPosts.filter((post: BlogPost) => 
-          post.isPublished && post.isVisible && post.status === 'published'
-        );
+        // Debug each post to see its publication status
+        allPosts.forEach((post: BlogPost, index: number) => {
+          console.log(`Post ${index + 1}:`, {
+            title: post.title,
+            isPublished: post.isPublished,
+            isVisible: post.isVisible,
+            status: post.status
+          });
+        });
+        
+        // Filter only published posts (more flexible filtering)
+        const publishedPosts = allPosts.filter((post: BlogPost) => {
+          const isPublished = post.isPublished === true;
+          const isVisible = post.isVisible !== false; // Default to true if not specified
+          const hasValidStatus = post.status === 'published' || !post.status; // Allow missing status
+          
+          console.log(`Filtering post "${post.title}":`, {
+            isPublished,
+            isVisible, 
+            hasValidStatus,
+            passes: isPublished && isVisible && hasValidStatus
+          });
+          
+          return isPublished && isVisible && hasValidStatus;
+        });
+        
+        console.log('Published posts after filtering:', publishedPosts.length);
         
         setPosts(publishedPosts);
         
@@ -380,24 +450,30 @@ export default function JournalPage() {
           <div className="grid md:grid-cols-3 gap-8 max-w-3xl mx-auto">
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <TrendingUp size={24} className="text-yellow-400" />
-                <span className="text-2xl font-bold">{posts.length}</span>
+                <BookOpen size={24} className="text-yellow-400" />
+                <span className="text-2xl font-bold">
+                  {loadingStats ? '...' : stats.totalBlogPosts}
+                </span>
               </div>
               <p className="opacity-75">Published Posts</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <Users size={24} className="text-yellow-400" />
-                <span className="text-2xl font-bold">5K+</span>
+                <TrendingUp size={24} className="text-yellow-400" />
+                <span className="text-2xl font-bold">
+                  {loadingStats ? '...' : stats.totalActivePerks}
+                </span>
               </div>
-              <p className="opacity-75">Monthly Readers</p>
+              <p className="opacity-75">Active Perks</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <Sparkles size={24} className="text-yellow-400" />
-                <span className="text-2xl font-bold">Weekly</span>
+                <Users size={24} className="text-yellow-400" />
+                <span className="text-2xl font-bold">
+                  {loadingStats ? '...' : `${stats.totalUsers}+`}
+                </span>
               </div>
-              <p className="opacity-75">New Content</p>
+              <p className="opacity-75">Community Members</p>
             </div>
           </div>
         </div>
