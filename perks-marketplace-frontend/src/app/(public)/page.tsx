@@ -1,14 +1,23 @@
 "use client";
 import PerksCard from "@/components/perks/PerkCardClickable";
 import Link from "next/link";
-import { Search, Sparkles, Link as LinkIcon } from "lucide-react";
+import { Search, Sparkles, Link as LinkIcon, TrendingUp, Users, BookOpen } from "lucide-react";
 import PerksCardSystem from "@/components/perks/PerkCard";
 import type { Perk } from "@/lib/types";
 import { useEffect, useState } from "react";
-import { perksPublic } from "@/services/api";
+import { perksPublic, leadManagement } from "@/services/api";
+import { log } from "console";
 export default function HomePage() {
   const [featuredPerks, setFeaturedPerks] = useState<Perk[]>([]);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalActivePerks: 0,
+    totalViews: 0,
+    totalClicks: 0,
+    totalPosts: 0,
+    publishedPosts: 0
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     const fetchFeaturedPerks = async () => {
@@ -19,11 +28,37 @@ export default function HomePage() {
         // Try to fetch perks from the API
         const response = await perksPublic.getActivePerks();
         console.log('Homepage perks response:', response);
-        const allPerks = response.data?.data || response.data || [];
+        
+        // Handle the nested API response structure
+        let perksData = [];
+        
+        // Extract perks from the nested response structure
+        if (response.data?.data?.data) {
+          // Handle: { data: { data: [...] } }
+          perksData = response.data.data.data;
+        } else if (response.data?.data && Array.isArray(response.data.data)) {
+          // Handle: { data: [...] }
+          perksData = response.data.data;
+        } else if (Array.isArray(response.data)) {
+          // Handle direct array: [...]
+          perksData = response.data;
+        } else {
+          // Handle other structures
+          perksData = [];
+        }
+        
+        console.log('Extracted perks data for homepage:', perksData);
+        
+        // Filter for active and visible perks
+        const activePerks = perksData.filter((perk: Perk) => 
+          perk.status === 'active' && 
+          perk.isVisible && 
+          perk.isAvailable !== false
+        );
         
         // Get featured perks or first 3 perks for showcase
-        const featured = allPerks.filter((perk: Perk) => perk.featured).slice(0, 3);
-        const perksToShow = featured.length > 0 ? featured : allPerks.slice(0, 3);
+        const featured = activePerks.filter((perk: Perk) => perk.isFeatured || perk.featured).slice(0, 3);
+        const perksToShow = featured.length > 0 ? featured : activePerks.slice(0, 3);
         
         console.log('Perks to show on homepage:', perksToShow);
         setFeaturedPerks(perksToShow);
@@ -39,9 +74,26 @@ export default function HomePage() {
           if (fallbackResponse.ok) {
             const fallbackData = await fallbackResponse.json();
             console.log('Fallback data:', fallbackData);
-            const allPerks = fallbackData.data || [];
-            const featured = allPerks.filter((perk: Perk) => perk.featured).slice(0, 3);
-            const perksToShow = featured.length > 0 ? featured : allPerks.slice(0, 3);
+            
+            // Handle fallback data structure
+            let fallbackPerks = [];
+            if (fallbackData.data?.data) {
+              fallbackPerks = fallbackData.data.data;
+            } else if (Array.isArray(fallbackData.data)) {
+              fallbackPerks = fallbackData.data;
+            } else {
+              fallbackPerks = [];
+            }
+            
+            // Filter active perks from fallback
+            const activeFallbackPerks = fallbackPerks.filter((perk: Perk) => 
+              perk.status === 'active' && 
+              perk.isVisible && 
+              perk.isAvailable !== false
+            );
+            
+            const featured = activeFallbackPerks.filter((perk: Perk) => perk.isFeatured || perk.featured).slice(0, 3);
+            const perksToShow = featured.length > 0 ? featured : activeFallbackPerks.slice(0, 3);
             setFeaturedPerks(perksToShow);
           }
         } catch (fallbackError) {
@@ -53,6 +105,40 @@ export default function HomePage() {
     };
 
     fetchFeaturedPerks();
+  }, []);
+
+  // Fetch public statistics
+  useEffect(() => {
+    const fetchPublicStats = async () => {
+      try {
+        setStatsLoading(true);
+        console.log('Fetching public statistics...');
+        
+        const response = await leadManagement.getStaticDetails();
+        console.log('Public stats response:', response);
+        
+        const statsData = response.data?.data || response.data;
+        
+        if (statsData) {
+          setStats({
+            totalActivePerks: statsData.perkStats?.totalActivePerks || 0,
+            totalViews: statsData.perkStats?.totalViews || 0,
+            totalClicks: statsData.perkStats?.totalClicks || 0,
+            totalPosts: statsData.blogStats?.totalPosts || 0,
+            publishedPosts: statsData.blogStats?.publishedPosts || 0
+          });
+        }
+        
+        console.log('Extracted stats:', stats);
+      } catch (error) {
+        console.error('Failed to fetch public statistics:', error);
+        // Keep default stats on error
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    fetchPublicStats();
   }, []);
 
   // No auth or router needed
@@ -125,7 +211,7 @@ export default function HomePage() {
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="w-64 h-80 bg-white rounded-lg shadow-2xl flex items-center justify-center">
                         <span className="text-[#6b8d7f] text-6xl font-light">
-                          pae
+                          page
                         </span>
                       </div>
                     </div>
@@ -183,6 +269,114 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Statistics Section */}
+        <section className="py-16 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#1a3d35] mb-4">
+                Join Our Growing Community
+              </h2>
+              <p className="text-gray-600 text-lg">
+                See what our platform has to offer
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {/* Active Perks Stat */}
+              <div className="text-center p-8 bg-[#f5f1e3] rounded-2xl hover:shadow-lg transition">
+                <div className="w-16 h-16 bg-yellow-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <TrendingUp className="text-[#1a3d35]" size={32} />
+                </div>
+                <div className="mb-2">
+                  {statsLoading ? (
+                    <div className="animate-pulse bg-gray-200 h-8 w-16 mx-auto rounded"></div>
+                  ) : (
+                    <span className="text-3xl font-bold text-[#1a3d35]">
+                      {stats.totalActivePerks}+
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-lg font-semibold text-[#1a3d35] mb-2">
+                  Active Perks
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  Exclusive deals available now
+                </p>
+              </div>
+
+              {/* Blog Posts Stat */}
+              <div className="text-center p-8 bg-[#f5f1e3] rounded-2xl hover:shadow-lg transition">
+                <div className="w-16 h-16 bg-[#1a3d35] rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <BookOpen className="text-yellow-400" size={32} />
+                </div>
+                <div className="mb-2">
+                  {statsLoading ? (
+                    <div className="animate-pulse bg-gray-200 h-8 w-16 mx-auto rounded"></div>
+                  ) : (
+                    <span className="text-3xl font-bold text-[#1a3d35]">
+                      {stats.publishedPosts}+
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-lg font-semibold text-[#1a3d35] mb-2">
+                  Blog Articles
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  Helpful guides and tips
+                </p>
+              </div>
+
+              {/* Community Engagement Stat */}
+              <div className="text-center p-8 bg-[#f5f1e3] rounded-2xl hover:shadow-lg transition">
+                <div className="w-16 h-16 bg-[#6b8d7f] rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Users className="text-white" size={32} />
+                </div>
+                <div className="mb-2">
+                  {statsLoading ? (
+                    <div className="animate-pulse bg-gray-200 h-8 w-16 mx-auto rounded"></div>
+                  ) : (
+                    <span className="text-3xl font-bold text-[#1a3d35]">
+                      {stats.totalClicks + stats.totalViews}+
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-lg font-semibold text-[#1a3d35] mb-2">
+                  Perk Interactions
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  Views and clicks by users
+                </p>
+              </div>
+            </div>
+
+            {/* Call to Action */}
+            <div className="text-center mt-12">
+              <div className="bg-linear-to-r from-[#1a3d35] to-[#2a4d45] rounded-2xl p-8 text-white">
+                <h3 className="text-2xl font-bold mb-4">
+                  Ready to Start Saving?
+                </h3>
+                <p className="text-lg mb-6 opacity-90">
+                  Join thousands of users who are already saving with our exclusive perks
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Link 
+                    href="/perks"
+                    className="bg-yellow-400 text-[#1a3d35] px-8 py-3 rounded-lg font-semibold hover:bg-yellow-500 transition text-center"
+                  >
+                    Browse All Perks
+                  </Link>
+                  <Link 
+                    href="/journal"
+                    className="bg-white/20 text-white px-8 py-3 rounded-lg font-semibold hover:bg-white/30 transition text-center border border-white/30"
+                  >
+                    Read Our Blog
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Featured Perks Showcase Section */}
         <section className="py-20 bg-[#f5f1e3]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -221,17 +415,7 @@ export default function HomePage() {
                 </div>
               )}
 
-              <div className="text-center">
-                <Link 
-                  href="/perks" 
-                  className="inline-flex items-center bg-yellow-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-yellow-600 transition-colors text-lg"
-                >
-                  View All Perks
-                  <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </Link>
-              </div>
+             
             </div>
 
             <div className="text-center mb-8">

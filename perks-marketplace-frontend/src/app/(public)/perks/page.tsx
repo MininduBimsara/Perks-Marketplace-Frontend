@@ -20,7 +20,38 @@ export default function PerksPage() {
         console.log("Fetching perks from service...");
         const response = await perksPublic.getActivePerks();
         console.log("Service response:", response);
-        setPerks(response.data?.data || response.data || []);
+        
+        // Handle the nested API response structure
+        let perksData = [];
+        
+        // Extract perks from the nested response structure
+        if (response.data?.data?.data) {
+          // Handle: { data: { data: [...] } }
+          perksData = response.data.data.data;
+        } else if (response.data?.data && Array.isArray(response.data.data)) {
+          // Handle: { data: [...] }
+          perksData = response.data.data;
+        } else if (Array.isArray(response.data)) {
+          // Handle direct array: [...]
+          perksData = response.data;
+        } else {
+          // Handle other structures
+          perksData = [];
+        }
+        
+        console.log("Extracted perks data:", perksData);
+        
+        // Filter for active and visible perks
+        const activePerks = perksData.filter((perk: Perk) => 
+          perk.status === 'active' && 
+          perk.isVisible && 
+          perk.isAvailable !== false
+        );
+        
+        console.log("Filtered active perks:", activePerks);
+        setPerks(activePerks);
+        setError(null);
+        
       } catch (err: any) {
         console.error("Failed to fetch perks:", err);
         setError(err?.message || "Failed to load perks");
@@ -34,7 +65,25 @@ export default function PerksPage() {
           if (fallbackResponse.ok) {
             const fallbackData = await fallbackResponse.json();
             console.log("Fallback data:", fallbackData);
-            setPerks(fallbackData.data || []);
+            
+            // Handle fallback data structure
+            let fallbackPerks = [];
+            if (fallbackData.data?.data) {
+              fallbackPerks = fallbackData.data.data;
+            } else if (Array.isArray(fallbackData.data)) {
+              fallbackPerks = fallbackData.data;
+            } else {
+              fallbackPerks = [];
+            }
+            
+            // Filter active perks from fallback
+            const activeFallbackPerks = fallbackPerks.filter((perk: Perk) => 
+              perk.status === 'active' && 
+              perk.isVisible && 
+              perk.isAvailable !== false
+            );
+            
+            setPerks(activeFallbackPerks);
             setError(null);
           } else {
             // Try direct backend call as last resort
@@ -44,7 +93,25 @@ export default function PerksPage() {
             if (directResponse.ok) {
               const directData = await directResponse.json();
               console.log("Direct backend data:", directData);
-              setPerks(directData.data || []);
+              
+              // Handle direct backend data structure
+              let directPerks = [];
+              if (directData.data?.data) {
+                directPerks = directData.data.data;
+              } else if (Array.isArray(directData.data)) {
+                directPerks = directData.data;
+              } else {
+                directPerks = [];
+              }
+              
+              // Filter active perks from direct call
+              const activeDirectPerks = directPerks.filter((perk: Perk) => 
+                perk.status === 'active' && 
+                perk.isVisible && 
+                perk.isAvailable !== false
+              );
+              
+              setPerks(activeDirectPerks);
               setError(null);
             }
           }
